@@ -989,21 +989,19 @@ const unitMap = {
     let cart = [];            // [{item_name, quantity, unit, maxQty}]
     let pendingConfirmFn = null;
     let currentSlipData = null;     // slip being viewed
-    let sessionToken    = null;     // token จาก login → เก็บใน cookie
+    let sessionToken    = null;     // token จาก login → เก็บใน localStorage
 
     // ========================
-    // Cookie helpers (ใช้แทน localStorage ใน GAS iframe)
+    // Storage helpers (localStorage — ใช้ได้เมื่อ host บน Firebase)
     // ========================
-    function setCookie(name, value, days) {
-      const expires = new Date(Date.now() + days * 864e5).toUTCString();
-      document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/; SameSite=None; Secure';
+    function setCookie(name, value) {
+      try { localStorage.setItem(name, value); } catch(e) {}
     }
     function getCookie(name) {
-      const match = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
-      return match ? decodeURIComponent(match[1]) : null;
+      try { return localStorage.getItem(name); } catch(e) { return null; }
     }
     function deleteCookie(name) {
-      document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=None; Secure';
+      try { localStorage.removeItem(name); } catch(e) {}
     }
 
     // ========================
@@ -1975,9 +1973,9 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s || 
       if (r.isOk) {
         currentUser  = r.user;
         sessionToken = r.token;
-        // บันทึก session ไว้ใน cookie อายุ 1 วัน
-        setCookie('gasToken', r.token, 1);
-        setCookie('gasUser',  JSON.stringify(r.user), 1);
+        // บันทึก session ไว้ใน localStorage
+        setCookie('gasToken', r.token);
+        setCookie('gasUser',  JSON.stringify(r.user));
         hideLoginOverlay();
         applyUserUI();
         await loadData();
@@ -2434,7 +2432,7 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s || 
             sessionToken = savedToken;
             currentUser  = r.user;
             // อัปเดต user object ล่าสุดจาก server
-            setCookie('gasUser', JSON.stringify(r.user), 1);
+            setCookie('gasUser', JSON.stringify(r.user));
             applyUserUI();
             await loadData();
             if (currentUser.role === 'admin') await loadUsers();
