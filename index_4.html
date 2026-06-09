@@ -1,0 +1,2454 @@
+<!doctype html>
+<html lang="en" class="h-full">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบเบิกวัสดุสำนักงาน</title>
+  
+   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Sarabun', sans-serif;
+    }
+
+    .font-heading {
+      font-family: 'Kanit', sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    .tab-active {
+      border-bottom: 3px solid;
+    }
+
+    .toast-enter {
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .toast-exit {
+      animation: slideOut 0.3s ease-in forwards;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-20px);
+        opacity: 0
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        opacity: 1
+      }
+
+      to {
+        opacity: 0;
+        transform: translateY(-20px)
+      }
+    }
+
+    .card-appear {
+      animation: fadeUp 0.25s ease-out;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .overlay-bg {
+      animation: fadeIn 0.15s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    /* Official form print styles */
+    @media print {
+      @page {
+        size: A4;
+        margin: 15mm 20mm 15mm 25mm;
+      }
+
+      body * {
+        visibility: hidden !important;
+      }
+
+      #print-area,
+      #print-area * {
+        visibility: visible !important;
+      }
+
+      #print-area {
+        position: fixed;
+        inset: 0;
+        background: #fff;
+        padding: 15mm 20mm 15mm 25mm;
+        font-family: "Sarabun", sans-serif;
+        font-size: 13pt;
+        line-height: 1.5;
+        color: #000;
+        box-sizing: border-box;
+      }
+
+      #print-area p,
+      #print-area div {
+        margin: 0;
+        padding: 0;
+      }
+
+      #print-area .form-title {
+        font-size: 14pt;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 0;
+        line-height: 1.5;
+      }
+
+      #print-area .form-header {
+        font-size: 13pt;
+        line-height: 1.5;
+      }
+
+      #print-area .form-header-row {
+        display: table;
+        width: 100%;
+      }
+
+      #print-area .form-header-left {
+        display: table-cell;
+        vertical-align: top;
+      }
+
+      #print-area .form-header-right {
+        display: table-cell;
+        text-align: right;
+        vertical-align: top;
+      }
+
+      #print-area .form-date {
+        text-align: right;
+        line-height: 1.5;
+        font-size: 13pt;
+      }
+
+      #print-area .form-section-sm {
+        line-height: 1.5;
+        font-size: 13pt;
+      }
+
+      #print-area table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 4pt;
+      }
+
+      #print-area td,
+      #print-area th {
+        border: 0.1px solid #000;
+        padding: 0 4pt;
+        font-size: 13pt;
+        line-height: 1.5;
+        height: 20pt;
+      }
+
+      #print-area thead th {
+        font-size: 13pt;
+        line-height: 1.4;
+        height: auto;
+        padding: 1pt 4pt;
+      }
+
+      #print-area .sig-wrap {
+        margin-top: 14pt;
+      }
+
+      #print-area .sig-grid {
+        display: table;
+        width: 100%;
+      }
+
+      #print-area .sig-col {
+        display: table-cell;
+        width: 50%;
+        text-align: center;
+        line-height: 1.5;
+        font-size: 13pt;
+        vertical-align: top;
+      }
+
+      #print-area .sig-approver {
+        text-align: center;
+        margin-top: 8pt;
+        line-height: 1.5;
+        font-size: 13pt;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    /* Official form preview styles (inside modal) */
+    .official-form {
+      font-family: "Sarabun", sans-serif;
+      font-size: 13pt;
+      line-height: 1.35;
+      color: #111;
+      background: #fff;
+    }
+
+    .official-form table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    .official-form td,
+    .official-form th {
+      border: 0.1px solid #000;
+      padding: 2pt 5pt;
+      font-size: 12pt;
+    }
+  </style>
+</head>
+
+<body class="h-full bg-slate-50">
+
+  <script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxrjHVgsPCeuDKIaNg-KsDZj6xxzZWIXRNCM_SjJ_4C-CeWf3uPNNOWYkFYjMyCyiE/exec'; // <-- วาง URL ที่นี่
+  </script>
+
+  <div id="app" class="h-full w-full flex flex-col overflow-auto">
+
+    <!-- Header -->
+    <header class="bg-orange-400 text-white px-4 py-4 sm:px-6">
+      <div class="max-w-4xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          
+<img src="" alt="">
+
+          <div>
+            <h1 class="font-heading text-xl sm:text-2xl font-bold">ระบบเบิกวัสดุสำนักงาน สำนักคลัง</h1>
+        <div id="dept-filter-banner" class="text-white">
+          <span><span>ฝ่าย</span><span id="dept-filter-label"></span></span>
+        </div>
+
+
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div id="sync-status" class="text-xs text-white-200 flex items-center gap-1">
+            <i data-lucide="loader" class="w-3 h-3 animate-spin"></i> กำลังโหลด...
+          </div>
+          <div id="user-info-btn" class="hidden items-center gap-2 cursor-pointer group" onclick="openUserMenu()">
+            <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm group-hover:bg-white/30 transition-colors" id="user-avatar">U</div>
+            <span id="user-display-name" class="text-sm text-white/90 hidden sm:block"></span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Summary Cards -->
+    <div class="max-w-4xl mx-auto w-full px-4 sm:px-6 mt-3">
+      <div class="grid grid-cols-3 gap-3">
+        <div class="bg-white rounded-xl shadow-sm p-3 border border-slate-100 text-center">
+          <p class="text-xs text-slate-500">รายการทั้งหมด</p>
+          <p id="stat-total" class="font-heading text-xl font-bold text-slate-800">0</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-3 border border-slate-100 text-center">
+          <p class="text-xs text-emerald-600">รับเข้า</p>
+          <p id="stat-in" class="font-heading text-xl font-bold text-emerald-600">0</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-3 border border-slate-100 text-center">
+          <p class="text-xs text-rose-500">ใบเบิก</p>
+          <p id="stat-out" class="font-heading text-xl font-bold text-rose-500">0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="max-w-4xl mx-auto w-full px-4 sm:px-6 mt-4">
+      <div class="flex border-b border-slate-200 overflow-x-auto" role="tablist">
+        <!-- bg-orange-500 -->
+        <button onclick="switchTab('stock')" id="tab-stock"
+          class="tab-active border-orange-500 text-orange-500 whitespace-nowrap px-4 py-2 text-sm font-medium"
+          role="tab">
+          <i data-lucide="package" class="inline w-4 h-4 mr-1 align-text-bottom"></i>สต็อก
+        </button>
+        <button onclick="switchTab('add')" id="tab-add"
+          class="text-slate-500 whitespace-nowrap px-4 py-2 text-sm font-medium hover:text-slate-700" role="tab">
+          <i data-lucide="plus-circle" class="inline w-4 h-4 mr-1 align-text-bottom"></i>รับเข้า
+        </button>
+        <button onclick="switchTab('withdraw')" id="tab-withdraw"
+          class="text-slate-500 whitespace-nowrap px-4 py-2 text-sm font-medium hover:text-slate-700" role="tab">
+          <i data-lucide="file-text" class="inline w-4 h-4 mr-1 align-text-bottom"></i>ใบเบิก
+        </button>
+        <button onclick="switchTab('history')" id="tab-history"
+          class="text-slate-500 whitespace-nowrap px-4 py-2 text-sm font-medium hover:text-slate-700" role="tab">
+          <i data-lucide="clock" class="inline w-4 h-4 mr-1 align-text-bottom"></i>ประวัติ
+        </button>
+        <button onclick="switchTab('dashboard')" id="tab-dashboard"
+          class="text-slate-500 whitespace-nowrap px-4 py-2 text-sm font-medium hover:text-slate-700" role="tab">
+          <i data-lucide="bar-chart-2" class="inline w-4 h-4 mr-1 align-text-bottom"></i>Dashboard
+        </button>
+        <button onclick="switchTab('users')" id="tab-users"
+          class="admin-only hidden text-slate-500 whitespace-nowrap px-4 py-2 text-sm font-medium hover:text-slate-700" role="tab">
+          <i data-lucide="users" class="inline w-4 h-4 mr-1 align-text-bottom"></i>ผู้ใช้
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Content -->
+    <main class="max-w-4xl mx-auto w-full px-4 sm:px-6 py-4 flex-1">
+
+      <!-- =================== STOCK =================== -->
+      <section id="panel-stock">
+        <div class="mb-3">
+          <input type="text" id="search-stock" placeholder="🔍 ค้นหาวัสดุ..."
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            oninput="renderStock()">
+        </div>
+        <div id="stock-list" class="space-y-2"></div>
+        <p id="stock-empty" class="text-center text-slate-400 py-10 text-sm hidden">ยังไม่มีวัสดุในสต็อก</p>
+      </section>
+
+      <!-- =================== ADD (รับเข้า) =================== -->
+      <section id="panel-add" class="hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
+          <h2 class="font-heading font-semibold text-lg text-slate-800 mb-3">เพิ่มวัสดุเข้าสต็อก</h2>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">ชื่อวัสดุ <span class="text-rose-500">*</span></label>
+              <input id="add-name" type="text" oninput="updateAddUnit()"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="เช่น กระดาษ A4">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm text-slate-600 mb-1">จำนวน <span class="text-rose-500">*</span></label>
+                <input id="add-qty" type="number" min="1"
+                  class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="0">
+              </div>
+              <div>
+                <label class="block text-sm text-slate-600 mb-1">หน่วยนับ</label>
+                <input id="add-unit" type="text"
+                  oninput="this.dataset.userEdited = this.value ? '1' : ''; if(!this.value) updateAddUnit();"
+                  class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="เช่น อัน, ม้วน, รีม">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">หมายเหตุ</label>
+              <input id="add-note" type="text"
+                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="เช่น เลขใบเสร็จ">
+            </div>
+            <button id="btn-add" onclick="handleAdd()"
+              class="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg py-2.5 text-sm font-medium transition-colors">
+              <i data-lucide="plus" class="inline w-4 h-4 mr-1 align-text-bottom"></i>เพิ่มเข้าสต็อก
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- =================== WITHDRAW (ใบเบิก) =================== -->
+      <section id="panel-withdraw" class="hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-3">
+          <h2 class="font-heading font-semibold text-lg text-slate-800 mb-3">สร้างใบเบิกวัสดุ</h2>
+
+          <!-- ผู้เบิก -->
+          <div class="border border-slate-100 rounded-xl p-3 bg-slate-50 mb-3 space-y-2">
+            <p class="text-xs font-semibold text-emerald-700 uppercase tracking-wide">ผู้เบิก</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div class="sm:col-span-1">
+                <label class="block text-xs text-slate-500 mb-0.5">ชื่อ-สกุล <span
+                    class="text-rose-500">*</span></label>
+                <input id="wd-name-requester" type="text"
+                  class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                  placeholder="เช่น นางสาวสมใจ ใจดี">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">ตำแหน่ง</label>
+                <input id="wd-pos-requester" type="text"
+                  class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                  placeholder="ตำแหน่งผู้เบิก">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">ฝ่าย</label>
+                <input id="wd-dept-requester" type="text"
+                  class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                  placeholder="เช่น บริหารงานทั่วไป">
+              </div>
+            </div>
+          </div>
+
+          <!-- ผู้จ่าย -->
+          <div class="border border-slate-100 rounded-xl p-3 bg-slate-50 mb-3 space-y-2">
+            <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">ผู้จ่าย</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">ชื่อ-สกุล</label>
+                <input id="wd-name-issuer" type="text"
+                  class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                  placeholder="ชื่อผู้จ่ายวัสดุ">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">ตำแหน่ง</label>
+                <input id="wd-pos-issuer" type="text"
+                  class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                  placeholder="ตำแหน่งผู้จ่าย">
+              </div>
+            </div>
+          </div>
+
+          <!-- ผู้อนุมัติ -->
+          <div class="border border-slate-100 rounded-xl p-3 bg-slate-50 mb-3 space-y-2">
+            <p class="text-xs font-semibold text-purple-600 uppercase tracking-wide">ผู้อนุมัติ</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">ชื่อ-สกุล</label>
+                <input id="wd-name-approver" type="text"
+                  class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                  placeholder="ชื่อผู้อนุมัติ">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">ตำแหน่ง</label>
+                <input id="wd-pos-approver" type="text"
+                  class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                  placeholder="ตำแหน่งผู้อนุมัติ">
+              </div>
+            </div>
+          </div>
+
+          <!-- เลขที่ใบเบิก -->
+          <div class="border border-slate-100 rounded-xl p-3 bg-slate-50 mb-3 space-y-2">
+            <p class="text-xs font-semibold text-slate-600 uppercase tracking-wide">เลขที่ใบเบิก</p>
+            <div>
+              <label class="block text-xs text-slate-500 mb-0.5">เลขที่ใบเบิก <span class="text-rose-500">*</span></label>
+              <input id="wd-slip-number" type="text"
+                class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white font-mono"
+                placeholder="เช่น 001/2568">
+            </div>
+          </div>
+
+          <!-- เพิ่มรายการ -->
+          <div class="border border-dashed border-slate-300 rounded-lg p-3 bg-slate-50 mb-3">
+            <p class="text-xs text-slate-500 font-medium mb-2">เพิ่มรายการเบิก</p>
+            <div class="flex gap-2 flex-wrap">
+              <div class="flex-1 min-w-[140px]">
+                <select id="wd-name"
+                  class="w-full border border-slate-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                  <option value="">-- เลือกวัสดุ --</option>
+                </select>
+              </div>
+              <div class="w-20">
+                <input id="wd-qty" type="number" min="1" placeholder="จำนวน"
+                  class="w-full border border-slate-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-center">
+              </div>
+              <div
+                class="w-16 flex items-center justify-center text-xs text-slate-400 border border-slate-200 rounded-lg bg-white"
+                id="wd-unit-display">
+                หน่วย
+              </div>
+              <button onclick="addToCart()"
+                class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap">
+                <i data-lucide="plus" class="inline w-4 h-4"></i> เพิ่ม
+              </button>
+            </div>
+            <p id="wd-avail" class="text-xs text-slate-400 mt-1.5 hidden">คงเหลือ: <span id="wd-avail-num"
+                class="font-medium text-slate-600"></span></p>
+          </div>
+
+          <!-- Cart -->
+          <div id="cart-area" class="hidden mb-3">
+            <p class="text-xs font-medium text-slate-500 mb-2">รายการในใบเบิก</p>
+            <div id="cart-list" class="space-y-1.5 mb-2"></div>
+          </div>
+
+          <button id="btn-submit-slip" onclick="handleWithdrawSlip()"
+            class="w-full bg-rose-500 hover:bg-rose-600 text-white rounded-lg py-2.5 text-sm font-medium transition-colors disabled:opacity-40"
+            disabled>
+            <i data-lucide="file-check" class="inline w-4 h-4 mr-1 align-text-bottom"></i>ยืนยันใบเบิก
+          </button>
+        </div>
+      </section>
+
+      <!-- =================== HISTORY =================== -->
+      <section id="panel-history" class="hidden">
+        <div class="flex gap-2 mb-3 flex-wrap">
+          <button onclick="filterHistory('slip')" id="hf-slip"
+            class="px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-white">ใบเบิก</button>
+          <button onclick="filterHistory('in')" id="hf-in"
+            class="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">รับเข้า</button>
+          <button onclick="filterHistory('all')" id="hf-all"
+            class="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">ทั้งหมด</button>
+          <button onclick="loadData()"
+            class="ml-auto px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 hover:bg-emerald-200">
+            <i data-lucide="refresh-cw" class="inline w-3 h-3 mr-1"></i>รีเฟรช
+          </button>
+        </div>
+        <div id="history-list" class="space-y-3"></div>
+        <p id="history-empty" class="text-center text-slate-400 py-10 text-sm hidden">ยังไม่มีประวัติ</p>
+      </section>
+
+      <!-- =================== DASHBOARD (Admin) =================== -->
+      <section id="panel-dashboard" class="hidden">
+        <!-- Dept filter bar (admin only) -->
+        <div class="flex items-center gap-2 mb-4 flex-wrap">
+          <span class="text-sm font-medium text-slate-600">แสดงข้อมูล:</span>
+          <div id="dash-dept-tabs" class="flex gap-1.5 flex-wrap"></div>
+        </div>
+
+        <!-- Summary KPI row -->
+        <div id="dash-kpi" class="grid grid-cols-3 gap-3 mb-4"></div>
+
+        <!-- Top items withdrawn -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-4">
+          <h3 class="font-heading font-semibold text-slate-700 text-sm mb-3 flex items-center gap-2">
+            <i data-lucide="trending-down" class="w-4 h-4 text-rose-500"></i>วัสดุที่ถูกเบิกมากที่สุด
+          </h3>
+          <div id="dash-top-items" class="space-y-2"></div>
+          <p id="dash-top-empty" class="text-center text-slate-400 py-4 text-sm hidden">ยังไม่มีข้อมูลการเบิก</p>
+        </div>
+
+        <!-- Per-department breakdown (admin all-dept view) -->
+        <div id="dash-dept-breakdown" class="hidden">
+          <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-4">
+            <h3 class="font-heading font-semibold text-slate-700 text-sm mb-3 flex items-center gap-2">
+              <i data-lucide="building-2" class="w-4 h-4 text-blue-500"></i>สรุปการเบิกแยกฝ่าย
+            </h3>
+            <div id="dash-dept-bars" class="space-y-3"></div>
+          </div>
+        </div>
+
+        <!-- Item detail table -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
+          <h3 class="font-heading font-semibold text-slate-700 text-sm mb-3 flex items-center gap-2">
+            <i data-lucide="table" class="w-4 h-4 text-emerald-600"></i>ตารางยอดเบิกแต่ละชนิด
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-slate-100">
+                  <th class="text-left py-2 pr-3 text-xs font-semibold text-slate-500 w-8">#</th>
+                  <th class="text-left py-2 pr-3 text-xs font-semibold text-slate-500">ชื่อวัสดุ</th>
+                  <th class="text-right py-2 pr-3 text-xs font-semibold text-emerald-600">รับเข้า</th>
+                  <th class="text-right py-2 pr-3 text-xs font-semibold text-rose-500">เบิกออก</th>
+                  <th class="text-right py-2 text-xs font-semibold text-slate-600">คงเหลือ</th>
+                </tr>
+              </thead>
+              <tbody id="dash-table-body"></tbody>
+            </table>
+          </div>
+          <p id="dash-table-empty" class="text-center text-slate-400 py-4 text-sm hidden">ยังไม่มีข้อมูล</p>
+        </div>
+      </section>
+
+      <!-- =================== USERS (Admin) =================== -->
+      <section id="panel-users" class="hidden">
+        <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h2 class="font-heading font-semibold text-lg text-slate-800">จัดการผู้ใช้งาน</h2>
+          <button onclick="openAddUserModal()"
+            class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center gap-1">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>เพิ่มผู้ใช้
+          </button>
+        </div>
+        <div id="users-list" class="space-y-2"></div>
+        <p id="users-empty" class="text-center text-slate-400 py-10 text-sm hidden">ยังไม่มีผู้ใช้</p>
+      </section>
+
+    </main><!-- /main -->
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden pointer-events-none">
+      <div id="toast-inner" class="px-4 py-2.5 rounded-lg shadow-lg text-sm font-medium text-white"></div>
+    </div>
+
+    <!-- Confirm Overlay (generic) -->
+    <div id="confirm-overlay"
+      class="fixed inset-0 bg-black/40 z-50 hidden overlay-bg flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl p-5 max-w-sm w-full shadow-xl">
+        <p class="font-heading font-semibold text-slate-800 mb-1" id="confirm-title">ยืนยันการลบ?</p>
+        <p id="confirm-text" class="text-sm text-slate-500 mb-4"></p>
+        <div class="flex gap-2">
+          <button onclick="cancelConfirm()"
+            class="flex-1 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">ยกเลิก</button>
+          <button onclick="doConfirm()" id="btn-confirm-ok"
+            class="flex-1 py-2 rounded-lg bg-rose-500 text-white text-sm font-medium hover:bg-rose-600">ลบ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slip View Overlay -->
+    <div id="slip-overlay"
+      class="fixed inset-0 bg-black/60 z-50 hidden overlay-bg flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl w-full shadow-2xl flex flex-col" style="max-width:680px;max-height:92vh;">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">
+          <h3 class="font-heading font-bold text-slate-800">ตัวอย่างใบเบิกวัสดุ</h3>
+          <div class="flex items-center gap-2">
+            <button onclick="printSlip()"
+              class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 flex items-center gap-1">
+              <i data-lucide="printer" class="w-3.5 h-3.5"></i>พิมพ์ / PDF
+            </button>
+            <button onclick="closeSlip()"
+              class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+        <!-- Preview body — scaled A4 -->
+        <div class="overflow-y-auto flex-1 bg-slate-100 p-4">
+          <div id="slip-body" style="
+            background:#fff;
+            width:595px; min-height:842px;
+            margin:0 auto;
+            padding:38px 42px 38px 52px;
+            box-shadow:0 2px 12px rgba(0,0,0,.15);
+            font-family:'Sarabun',sans-serif;
+            font-size:13pt; line-height:1.35; color:#000;
+          "></div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      /* Preview styles inside slip-body */
+      #slip-body .form-title { font-size:16pt; font-weight:bold; text-align:center; line-height:1.4; }
+      #slip-body .form-header-row { display:table; width:100%; }
+      #slip-body .form-header-left  { display:table-cell; vertical-align:top; font-size:12pt; line-height:1.35; }
+      #slip-body .form-header-right { display:table-cell; text-align:right; vertical-align:top; font-size:12pt; line-height:1.35; }
+      #slip-body .form-date { text-align:right; font-size:12pt; line-height:1.35; }
+      #slip-body .form-section-sm { font-size:12pt; line-height:1.35; }
+      #slip-body table { border-collapse:collapse; width:100%; margin-top:8px; }
+      #slip-body td, #slip-body th { border:0.5px solid #000; padding:1px 4px 0 4px; font-size:12pt; line-height:1.2; height:18px; vertical-align:top; }
+      #slip-body thead th { font-size:12pt; line-height:1.2; height:auto; padding:2px 4px; text-align:center; }
+      #slip-body .sig-wrap { margin-top:12px; }
+      #slip-body .sig-grid { display:table; width:100%; }
+      #slip-body .sig-col  { display:table-cell; width:50%; text-align:center; line-height:1.35; vertical-align:top; font-size:12pt; }
+      #slip-body .sig-approver { text-align:center; margin-top:8px; line-height:1.35; font-size:12pt; }
+    </style>
+
+    <!-- Print area (hidden, used for print) -->
+    <div id="print-area" class="hidden"></div>
+
+    <!-- Update Stock Overlay -->
+    <div id="update-stock-overlay"
+      class="fixed inset-0 bg-black/40 z-50 hidden overlay-bg flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl p-5 max-w-sm w-full shadow-xl">
+        <div class="flex items-center justify-between mb-3">
+          <p class="font-heading font-semibold text-slate-800">อัปเดตสต็อกวัสดุ</p>
+          <button onclick="closeUpdateStock()" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <p id="update-stock-name" class="text-sm font-medium text-emerald-700 mb-1 truncate"></p>
+        <p class="text-xs text-slate-400 mb-3">สต็อกปัจจุบัน: <span id="update-stock-current" class="font-semibold text-slate-600"></span></p>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">ประเภทการอัปเดต</label>
+            <div class="flex gap-2">
+              <button id="update-type-add" onclick="setUpdateType('add')"
+                class="flex-1 py-2 rounded-lg text-sm font-medium border-2 border-emerald-500 bg-emerald-50 text-emerald-700">
+                + เพิ่มเข้า
+              </button>
+              <button id="update-type-set" onclick="setUpdateType('set')"
+                class="flex-1 py-2 rounded-lg text-sm font-medium border-2 border-slate-200 bg-white text-slate-600">
+                ตั้งค่าใหม่
+              </button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">จำนวน <span class="text-rose-500">*</span></label>
+            <input id="update-stock-qty" type="number" min="0"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="0">
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">หมายเหตุ</label>
+            <input id="update-stock-note" type="text"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="เช่น ตรวจนับสต็อก, รับของเพิ่ม">
+          </div>
+        </div>
+        <div class="flex gap-2 mt-4">
+          <button onclick="closeUpdateStock()"
+            class="flex-1 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">ยกเลิก</button>
+          <button onclick="handleUpdateStock()" id="btn-update-stock-ok"
+            class="flex-1 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">บันทึก</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rename Item Overlay -->
+    <div id="rename-overlay"
+      class="fixed inset-0 bg-black/40 z-50 hidden overlay-bg flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl p-5 max-w-sm w-full shadow-xl">
+        <div class="flex items-center justify-between mb-3">
+          <p class="font-heading font-semibold text-slate-800">แก้ชื่อวัสดุ</p>
+          <button onclick="closeRenameItem()" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <p class="text-xs text-slate-400 mb-3">ชื่อเดิม: <span id="rename-old-name" class="font-semibold text-slate-600"></span></p>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">ชื่อใหม่ <span class="text-rose-500">*</span></label>
+            <input id="rename-new-name" type="text"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              placeholder="ชื่อวัสดุใหม่">
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">หน่วยนับ</label>
+            <input id="rename-unit" type="text"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+              placeholder="เช่น อัน, ม้วน, รีม">
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 mt-2">* ระบบจะอัปเดตชื่อในทุกรายการที่เกี่ยวข้อง</p>
+        <div class="flex gap-2 mt-4">
+          <button onclick="closeRenameItem()"
+            class="flex-1 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">ยกเลิก</button>
+          <button onclick="handleRenameItem()" id="btn-rename-ok"
+            class="flex-1 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600">บันทึก</button>
+        </div>
+      </div>
+    </div>
+
+<!-- =================== LOGIN OVERLAY =================== -->
+<div id="login-overlay" class="fixed inset-0 z-[100] flex items-center justify-center bg-orange-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+    <!-- Top bar -->
+    <div class="bg-orange-400 px-6 py-5 text-white">
+      <div class="flex items-center justify-center gap-3">
+        <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-md overflow-hidden">
+        
+<img src="" alt="">
+
+        </div>
+        <div class="text-left">
+          <h1 class="font-heading text-xl font-bold leading-tight">ระบบเบิกวัสดุสำนักงาน</h1>
+          <p class="text-orange-100 text-sm mt-0.5">สำนักคลัง เทศบาลนครขอนแก่น</p>
+        </div>
+      </div>
+    </div>
+    <div class="px-6 py-6 space-y-4">
+      <div>
+        <label class="block text-sm text-slate-600 mb-1 font-medium">ชื่อผู้ใช้</label>
+        <div class="relative">
+          <i data-lucide="user" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+          <input id="login-username" type="text" placeholder="ชื่อผู้ใช้"
+            class="w-full border border-slate-200 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()">
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm text-slate-600 mb-1 font-medium">รหัสผ่าน</label>
+        <div class="relative">
+          <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+          <input id="login-password" type="password" placeholder="รหัสผ่าน"
+            class="w-full border border-slate-200 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            onkeydown="if(event.key==='Enter')handleLogin()">
+        </div>
+      </div>
+      <p id="login-error" class="text-rose-500 text-sm hidden text-center"></p>
+      <button onclick="handleLogin()" id="btn-login"
+        class="w-full bg-orange-400 hover:bg-orange-500 text-white rounded-lg py-2.5 text-sm font-semibold transition-colors">
+        เข้าสู่ระบบ
+      </button>
+    </div>
+  </div>
+</div>
+
+  <!-- =================== USER MENU OVERLAY =================== -->
+  <div id="user-menu-overlay" class="fixed inset-0 z-[90] hidden" onclick="closeUserMenu()">
+    <div id="user-menu-panel" class="absolute right-4 top-16 bg-white rounded-xl shadow-2xl border border-slate-100 w-64 overflow-hidden" onclick="event.stopPropagation()">
+      <!-- Profile header -->
+      <div class="bg-orange-50 px-4 py-3 border-b border-orange-100">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-orange-400 flex items-center justify-center text-white font-bold" id="menu-avatar">U</div>
+          <div>
+            <p id="menu-fullname" class="font-semibold text-slate-800 text-sm"></p>
+            <p id="menu-role-badge" class="text-xs text-slate-500"></p>
+          </div>
+        </div>
+        <div class="mt-2 space-y-0.5 text-xs text-slate-500">
+          <p><span class="text-slate-400">ตำแหน่ง:</span> <span id="menu-position">-</span></p>
+          <p><span class="text-slate-400">ฝ่าย:</span> <span id="menu-department">-</span></p>
+        </div>
+      </div>
+      <!-- Actions -->
+      <div class="py-1">
+        <button onclick="openChangePasswordModal(); closeUserMenu();"
+          class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+          <i data-lucide="key" class="w-4 h-4 text-slate-400"></i>เปลี่ยนรหัสผ่าน
+        </button>
+        <button onclick="handleLogout()"
+          class="w-full text-left px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2">
+          <i data-lucide="log-out" class="w-4 h-4"></i>ออกจากระบบ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== ADD/EDIT USER MODAL =================== -->
+  <div id="user-modal-overlay" class="fixed inset-0 bg-black/40 z-50 hidden overlay-bg flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl p-5 max-w-md w-full shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <p id="user-modal-title" class="font-heading font-semibold text-slate-800">เพิ่มผู้ใช้ใหม่</p>
+        <button onclick="closeUserModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="space-y-3">
+        <div class="grid grid-cols-1 gap-3" id="user-modal-username-row">
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">ชื่อผู้ใช้ (username) <span class="text-rose-500">*</span></label>
+            <input id="um-username" type="text"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="เช่น somjai.j">
+          </div>
+        </div>
+        <div id="user-modal-password-row">
+          <label class="block text-sm text-slate-600 mb-1">รหัสผ่าน <span class="text-rose-500">*</span></label>
+          <input id="um-password" type="password"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="รหัสผ่าน">
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">ชื่อ-นามสกุล <span class="text-rose-500">*</span></label>
+          <input id="um-fullname" type="text"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="เช่น นางสาวสมใจ ใจดี">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">ตำแหน่ง</label>
+            <input id="um-position" type="text"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="เช่น นักวิชาการ">
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">ฝ่าย</label>
+            <select id="um-department"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+              <option value="">-- เลือกฝ่าย --</option>
+              <option value="บริหารงานทั่วไป">บริหารงานทั่วไป</option>
+              <option value="แผนงานและงบประมาณ">แผนงานและงบประมาณ</option>
+              <option value="สถิติการคลัง">สถิติการคลัง</option>
+              <option value="การเงินและบัญชี">การเงินและบัญชี</option>
+              <option value="ผลประโยชน์และกิจการพาณิชย์">ผลประโยชน์และกิจการพาณิชย์</option>
+              <option value="พัฒนารายได้">พัฒนารายได้</option>
+              <option value="ระเบียบการคลัง">ระเบียบการคลัง</option>
+              <option value="แผนที่ภาษีและทะเบียนทรัพย์สิน">แผนที่ภาษีและทะเบียนทรัพย์สิน</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">สถานะผู้ใช้</label>
+          <select id="um-role"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="user">ผู้ใช้</option>
+            <option value="admin">แอดมิน</option>
+          </select>
+        </div>
+        <div id="um-active-row" class="hidden">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input id="um-active" type="checkbox" class="w-4 h-4 rounded" checked>
+            <span class="text-sm text-slate-600">เปิดใช้งาน</span>
+          </label>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button onclick="closeUserModal()"
+          class="flex-1 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">ยกเลิก</button>
+        <button onclick="handleSaveUser()" id="btn-save-user"
+          class="flex-1 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== CHANGE PASSWORD MODAL =================== -->
+  <div id="change-pw-overlay" class="fixed inset-0 bg-black/40 z-50 hidden overlay-bg flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl p-5 max-w-sm w-full shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <p class="font-heading font-semibold text-slate-800">เปลี่ยนรหัสผ่าน</p>
+        <button onclick="closeChangePasswordModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">รหัสผ่านเดิม <span class="text-rose-500">*</span></label>
+          <input id="cpw-old" type="password"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            placeholder="รหัสผ่านปัจจุบัน">
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">รหัสผ่านใหม่ <span class="text-rose-500">*</span></label>
+          <input id="cpw-new" type="password"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)">
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">ยืนยันรหัสผ่านใหม่ <span class="text-rose-500">*</span></label>
+          <input id="cpw-confirm" type="password"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            placeholder="ยืนยันรหัสผ่านใหม่">
+        </div>
+        <p id="cpw-error" class="text-rose-500 text-xs hidden"></p>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button onclick="closeChangePasswordModal()"
+          class="flex-1 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">ยกเลิก</button>
+        <button onclick="handleChangePassword()" id="btn-cpw"
+          class="flex-1 py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /#app -->
+
+  <script>
+    // ========================
+    // Unit Map
+    // ========================
+const unitMap = {
+  // เครื่องเขียน
+  "ปากกา": "ด้าม", "ดินสอ": "แท่ง", "ปากกาไวท์บอร์ด": "ด้าม",
+  "ปากกาเน้นข้อความ": "ด้าม", "ปากกาลบได้": "ด้าม",
+  "ไม้บรรทัด": "อัน", "ยางลบ": "ก้อน", "กบเหลาดินสอ": "อัน",
+
+  // กระดาษ & แฟ้ม
+  "กระดาษ A4": "รีม", "กระดาษ A3": "รีม",
+  "กระดาษโน้ต": "เล่ม", "แฟ้ม": "เล่ม", "แฟ้มแขวน": "เล่ม",
+  "แฟ้มสอด": "เล่ม", "แฟ้มริม": "เล่ม",
+
+  // อุปกรณ์ยึด/ติด
+  "กาวแท่ง": "แท่ง", "กาวน้ำ": "ขวด",
+  "เทป": "ม้วน", "เทปกาวสองหน้า": "ม้วน", "เทปลบคำผิด": "ม้วน",
+  "ลวดเสียบ": "กล่อง", "ลวดเย็บ": "กล่อง",
+  "คลิปดำ": "กล่อง", "คลิปหนีบ": "กล่อง",
+  "เข็มหมุด": "กล่อง", "ยึดแฟ้ม": "อัน",
+
+  // เครื่องใช้สำนักงาน
+  "เครื่องเย็บกระดาษ": "อัน", "ที่เจาะกระดาษ": "อัน",
+  "กรรไกร": "อัน", "มีดคัตเตอร์": "อัน", "แม็กซ์": "อัน",
+
+  // บรรจุภัณฑ์/อื่น ๆ
+  "สมุด": "เล่ม", "หมึก": "ขวด", "ซอง": "ซอง",
+  "ถุงพลาสติก": "ใบ", "กล่องกระดาษ": "ใบ",
+  "แสตมป์": "ดวง", "สติ๊กเกอร์": "แผ่น",
+
+  // หมึกพิมพ์/ไอที
+  "หมึกพิมพ์": "ตลับ", "ผงหมึก": "ตลับ",
+  "แผ่น CD": "แผ่น", "แฟลชไดร์ฟ": "อัน",
+};
+    function findUnit(name) {
+      if (!name) return "";
+      name = name.toString().trim();
+      for (const k in unitMap) { if (name.includes(k)) return unitMap[k]; }
+      return "อัน";
+    }
+
+    // ========================
+    // State
+    // ========================
+    let allRecords = [];
+    let currentTab = 'stock';
+    let historyFilter = 'slip';
+    let cart = [];            // [{item_name, quantity, unit, maxQty}]
+    let pendingConfirmFn = null;
+    let currentSlipData = null;     // slip being viewed
+    let sessionToken    = null;     // token จาก login → เก็บใน cookie
+
+    // ========================
+    // Cookie helpers (ใช้แทน localStorage ใน GAS iframe)
+    // ========================
+    function setCookie(name, value, days) {
+      const expires = new Date(Date.now() + days * 864e5).toUTCString();
+      document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/; SameSite=None; Secure';
+    }
+    function getCookie(name) {
+      const match = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+    function deleteCookie(name) {
+      document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=None; Secure';
+    }
+
+    // ========================
+    // API
+    // ========================
+    async function api(action, extra = {}) {
+      const body = { action, ...extra };
+      if (sessionToken) body.token = sessionToken;
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'text/plain' }
+      });
+      return res.json();
+    }
+
+    async function loadData() {
+      setSyncStatus('loading');
+      try {
+        // admin เห็นทุกฝ่าย, user เห็นเฉพาะฝ่ายตัวเอง
+        const extra = (currentUser && currentUser.role !== 'admin' && currentUser.department)
+          ? { department: currentUser.department }
+          : {};
+        const r = await api('getAll', extra);
+        if (r.isOk) {
+          allRecords = r.records;
+          updateStats();
+          renderStock();
+          renderHistory();
+          populateWithdrawSelect();
+          setSyncStatus('ok');
+        } else { setSyncStatus('error'); showToast('โหลดข้อมูลล้มเหลว', 'bg-rose-500'); }
+      } catch (e) {
+        setSyncStatus('error');
+        showToast('เชื่อมต่อ Server ไม่ได้ — ตรวจสอบ GAS_URL', 'bg-rose-500');
+      }
+    }
+
+    // ========================
+    // Stock map helpers
+    // ========================
+    function getStockMap() {
+      const map = {};
+      allRecords.forEach(r => {
+        const k = r.item_name;
+        if (!map[k]) map[k] = { qty: 0, unit: r.unit || '', department: r.department || '' };
+        if (r.type === 'in') map[k].qty += Number(r.quantity);
+        else map[k].qty -= Number(r.quantity);
+        // อัปเดต department จาก record ล่าสุดที่มีค่า
+        if (r.department) map[k].department = r.department;
+      });
+      return map;
+    }
+
+    function updateStats() {
+      document.getElementById('stat-total').textContent = allRecords.length;
+      document.getElementById('stat-in').textContent = allRecords.filter(r => r.type === 'in').length;
+      // นับจำนวนใบเบิก (unique slip_id)
+      const slips = new Set(allRecords.filter(r => r.slip_id).map(r => r.slip_id));
+      document.getElementById('stat-out').textContent = slips.size;
+    }
+
+    // ========================
+    // Render Stock
+    // ========================
+    function renderStock() {
+      const map = getStockMap();
+      const search = (document.getElementById('search-stock').value || '').toLowerCase();
+      const list = document.getElementById('stock-list');
+      const entries = Object.entries(map)
+        .filter(([n]) => n.toLowerCase().includes(search))
+        .sort((a, b) => a[0].localeCompare(b[0], 'th'));
+
+      const empty = document.getElementById('stock-empty');
+      if (!entries.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+
+      list.innerHTML = entries.map(([name, info]) => {
+        const c = info.qty <= 0 ? 'text-rose-500' : info.qty <= 5 ? 'text-amber-500' : 'text-emerald-600';
+        const isAdmin = currentUser && currentUser.role === 'admin';
+        const deptBadge = isAdmin && info.department
+          ? `<span class="text-xs px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">${esc(info.department)}</span>`
+          : '';
+        return `<div class="card-appear bg-white rounded-lg border border-slate-100 shadow-sm p-3 flex items-center justify-between gap-2">
+      <div class="flex-1 min-w-0">
+        <p class="font-medium text-slate-800 text-sm">${esc(name)}</p>
+        <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
+          <span class="text-xs text-slate-400">${esc(info.unit)}</span>
+          ${deptBadge}
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <div class="text-right mr-1"><span class="font-heading text-lg font-bold ${c}">${info.qty}</span> <span class="text-xs text-slate-400">${esc(info.unit)}</span></div>
+        <button onclick="openUpdateStock('${esc(name)}', ${info.qty}, '${esc(info.unit)}')"
+          class="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-500 hover:text-blue-700 transition-colors flex-shrink-0"
+          title="อัปเดตสต็อก">
+          <i data-lucide="arrow-up-down" class="w-4 h-4"></i>
+        </button>
+        <button onclick="openRenameItem('${esc(name)}', '${esc(info.unit)}')"
+          class="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-500 hover:text-amber-700 transition-colors flex-shrink-0"
+          title="แก้ชื่อวัสดุ">
+          <i data-lucide="pencil" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    // ========================
+    // Render History (slip-grouped)
+    // ========================
+    function renderHistory() {
+      const list = document.getElementById('history-list');
+      const empty = document.getElementById('history-empty');
+
+      if (historyFilter === 'in') {
+        // รับเข้า — รายการเดี่ยว
+        const ins = allRecords.filter(r => r.type === 'in')
+          .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+        if (!ins.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        list.innerHTML = ins.map(r => singleInCard(r)).join('');
+        lucide.createIcons();
+        return;
+      }
+
+      if (historyFilter === 'slip' || historyFilter === 'all') {
+        // จัดกลุ่มตาม slip_id
+        const slipMap = {};
+        const standalone = [];
+
+        allRecords.forEach(r => {
+          if (r.type === 'out' && r.slip_id) {
+            const sid = String(r.slip_id);
+            if (!slipMap[sid]) slipMap[sid] = [];
+            slipMap[sid].push(r);
+          } else if (historyFilter === 'all' && r.type === 'in') {
+            standalone.push(r);
+          }
+        });
+
+        // sort slips by date of first item
+        const slipEntries = Object.entries(slipMap).sort((a, b) => {
+          const da = a[1][0].created_at || '';
+          const db = b[1][0].created_at || '';
+          return db.localeCompare(da);
+        });
+
+        // sort standalone
+        standalone.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+
+        const allItems = [
+          ...slipEntries.map(([sid, rows]) => ({ kind: 'slip', sid, rows })),
+          ...standalone.map(r => ({ kind: 'in', r }))
+        ].sort((a, b) => {
+          const da = a.kind === 'slip' ? (a.rows[0].created_at || '') : (a.r.created_at || '');
+          const db = b.kind === 'slip' ? (b.rows[0].created_at || '') : (b.r.created_at || '');
+          return db.localeCompare(da);
+        });
+
+        if (!allItems.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+
+        list.innerHTML = allItems.map(item => {
+          if (item.kind === 'slip') return slipCard(item.sid, item.rows);
+          return singleInCard(item.r);
+        }).join('');
+        lucide.createIcons();
+        return;
+      }
+    }
+
+    function singleInCard(r) {
+      const d = r.created_at ? new Date(r.created_at) : null;
+      const dateStr = d ? thDate(d) : '';
+      const isAdmin = currentUser && currentUser.role === 'admin';
+      const deptBadge = isAdmin && r.department
+        ? `<span class="text-xs px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">${esc(r.department)}</span>`
+        : '';
+      return `<div class="card-appear bg-white rounded-lg border border-slate-100 shadow-sm p-3 flex items-center justify-between gap-2">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">รับเข้า</span>
+        <span class="text-xs text-slate-400">${dateStr}</span>
+        ${deptBadge}
+      </div>
+      <p class="font-medium text-slate-800 text-sm mt-1">${esc(r.item_name)} <span class="text-slate-400">×${r.quantity} ${esc(r.unit || '')}</span></p>
+      ${r.note ? `<p class="text-xs text-slate-400 truncate">${esc(r.note)}</p>` : ''}
+    </div>
+    <button onclick="askDeleteRecord('${r.id}')" class="p-1.5 rounded-lg hover:bg-rose-50 text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0">
+      <i data-lucide="trash-2" class="w-4 h-4"></i>
+    </button>
+  </div>`;
+    }
+
+    function slipCard(sid, rows) {
+      const d = rows[0].created_at ? new Date(rows[0].created_at) : null;
+      const dateStr = d ? thDate(d) : '';
+      let note = rows[0].note || '';
+      try { const m = JSON.parse(note); note = m.requester || note; } catch (e) { }
+      const totalItems = rows.reduce((s, r) => s + Number(r.quantity), 0);
+      const dept = rows[0].department || '';
+      const isAdmin = currentUser && currentUser.role === 'admin';
+      const deptBadge = isAdmin && dept
+        ? `<span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200">${esc(dept)}</span>`
+        : '';
+      const itemLines = rows.map(r =>
+        `<div class="flex justify-between text-sm py-0.5">
+      <span class="text-slate-700">${esc(r.item_name)}</span>
+      <span class="text-slate-500">${r.quantity} ${esc(r.unit || '')}</span>
+    </div>`
+      ).join('');
+
+      return `<div class="card-appear bg-white rounded-xl border border-rose-100 shadow-sm overflow-hidden">
+    <!-- slip header -->
+    <div class="bg-rose-50 px-4 py-2.5 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs px-2 py-0.5 rounded-full bg-rose-500 text-white font-medium">ใบเบิก</span>
+        <span class="text-xs text-slate-500">${dateStr}</span>
+        ${deptBadge}
+        ${note ? `<span class="text-xs text-slate-600 font-medium">${esc(note)}</span>` : ''}
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button onclick="viewSlip(this.dataset.sid)" data-sid="${esc(sid)}" class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-xs text-slate-600 hover:bg-slate-50 flex items-center gap-1">
+          <i data-lucide="eye" class="w-3 h-3"></i>ดูใบเบิก
+        </button>
+        <button onclick="askDeleteSlip(this.dataset.sid)" data-sid="${esc(sid)}" class="p-1.5 rounded-lg hover:bg-rose-100 text-rose-300 hover:text-rose-600 transition-colors">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+    <!-- slip items summary -->
+    <div class="px-4 py-2.5 divide-y divide-slate-50">
+      ${itemLines}
+    </div>
+    <div class="px-4 py-2 border-t border-slate-100 flex justify-between text-xs text-slate-400">
+      <span>${rows.length} รายการ</span>
+      <span>รวม ${totalItems} ชิ้น</span>
+    </div>
+  </div>`;
+    }
+
+    // ========================
+    // Withdraw — cart system
+    // ========================
+    function populateWithdrawSelect() {
+      const sel = document.getElementById('wd-name');
+      const map = getStockMap();
+
+      // หักออกตาม cart ด้วย
+      const cartQty = {};
+      cart.forEach(c => { cartQty[c.item_name] = (cartQty[c.item_name] || 0) + c.quantity; });
+
+      const opts = Object.entries(map)
+        .map(([name, info]) => ({ name, qty: info.qty - (cartQty[name] || 0), unit: info.unit }))
+        .filter(o => o.qty > 0)
+        .sort((a, b) => a.name.localeCompare(b.name, 'th'));
+
+      const prev = sel.value;
+      sel.innerHTML = '<option value="">-- เลือกวัสดุ --</option>' +
+        opts.map(o => `<option value="${esc(o.name)}" data-unit="${esc(o.unit)}" data-qty="${o.qty}">${esc(o.name)} (เหลือ ${o.qty} ${esc(o.unit)})</option>`).join('');
+      if (prev) sel.value = prev;
+      updateWdAvail();
+    }
+
+    document.getElementById('wd-name').addEventListener('change', updateWdAvail);
+
+    function updateWdAvail() {
+      const sel = document.getElementById('wd-name');
+      const opt = sel.selectedOptions[0];
+      const avail = document.getElementById('wd-avail');
+      const unitEl = document.getElementById('wd-unit-display');
+      if (opt && opt.value) {
+        avail.classList.remove('hidden');
+        document.getElementById('wd-avail-num').textContent = opt.dataset.qty + ' ' + opt.dataset.unit;
+        unitEl.textContent = opt.dataset.unit;
+        document.getElementById('wd-qty').max = opt.dataset.qty;
+      } else {
+        avail.classList.add('hidden');
+        unitEl.textContent = 'หน่วย';
+      }
+    }
+
+    const MAX_CART_ITEMS = 15;
+
+    function addToCart() {
+      const sel = document.getElementById('wd-name');
+      const opt = sel.selectedOptions[0];
+      if (!opt || !opt.value) { showToast('เลือกวัสดุก่อน', 'bg-amber-500'); return; }
+
+      const qty = parseInt(document.getElementById('wd-qty').value);
+      if (!qty || qty < 1) { showToast('ระบุจำนวน', 'bg-amber-500'); return; }
+      const maxQty = parseInt(opt.dataset.qty);
+      if (qty > maxQty) { showToast(`มีในสต็อกแค่ ${maxQty} ${opt.dataset.unit}`, 'bg-amber-500'); return; }
+
+      const name = opt.value;
+      const unit = opt.dataset.unit;
+
+      // ถ้ามีในตะกร้าแล้ว รวมจำนวน
+      const existing = cart.find(c => c.item_name === name);
+      if (existing) {
+        if (existing.quantity + qty > maxQty) { showToast(`เกินสต็อก`, 'bg-amber-500'); return; }
+        existing.quantity += qty;
+      } else {
+        // ตรวจสอบจำนวนชนิดวัสดุในตะกร้า ไม่เกิน 15 ชนิด
+        if (cart.length >= MAX_CART_ITEMS) {
+          showToast(`เพิ่มได้สูงสุด ${MAX_CART_ITEMS} ชนิดต่อใบเบิก`, 'bg-amber-500');
+          return;
+        }
+        cart.push({ item_name: name, quantity: qty, unit });
+      }
+
+      // reset row
+      sel.value = '';
+      document.getElementById('wd-qty').value = '';
+      updateWdAvail();
+      populateWithdrawSelect();
+      renderCart();
+    }
+
+    function removeFromCart(idx) {
+      cart.splice(idx, 1);
+      populateWithdrawSelect();
+      renderCart();
+    }
+
+    function renderCart() {
+      const area = document.getElementById('cart-area');
+      const listEl = document.getElementById('cart-list');
+      const btnSubmit = document.getElementById('btn-submit-slip');
+
+      if (!cart.length) {
+        area.classList.add('hidden');
+        btnSubmit.disabled = true;
+        return;
+      }
+      area.classList.remove('hidden');
+      btnSubmit.disabled = false;
+
+      // แสดงตัวนับชนิดวัสดุ
+      const cartHeader = document.querySelector('#cart-area p');
+      if (cartHeader) {
+        cartHeader.innerHTML = `รายการในใบเบิก <span class="font-semibold ${cart.length >= MAX_CART_ITEMS ? 'text-rose-500' : 'text-slate-600'}">${cart.length}/${MAX_CART_ITEMS} ชนิด</span>${cart.length >= MAX_CART_ITEMS ? ' <span class="text-rose-500 text-xs">(เต็มแล้ว)</span>' : ''}`;
+      }
+
+      listEl.innerHTML = cart.map((c, i) =>
+        `<div class="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2">
+      <span class="text-sm text-slate-700">${esc(c.item_name)}</span>
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-medium text-rose-600">${c.quantity} ${esc(c.unit)}</span>
+        <button onclick="removeFromCart(${i})" class="text-slate-300 hover:text-rose-500">
+          <i data-lucide="x-circle" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>`
+      ).join('');
+      lucide.createIcons();
+    }
+
+    async function handleWithdrawSlip() {
+      if (!cart.length) { showToast('ยังไม่มีรายการ', 'bg-amber-500'); return; }
+
+      const slipNumber = document.getElementById('wd-slip-number').value.trim();
+      if (!slipNumber) { showToast('กรุณากรอกเลขที่ใบเบิก', 'bg-amber-500'); return; }
+
+      const nameReq = document.getElementById('wd-name-requester').value.trim();
+      if (!nameReq) { showToast('กรุณากรอกชื่อผู้เบิก', 'bg-amber-500'); return; }
+
+      const meta = {
+        slipNumber: slipNumber,
+        requester: nameReq,
+        requesterPos: document.getElementById('wd-pos-requester').value.trim(),
+        requesterDept: document.getElementById('wd-dept-requester').value.trim(),
+        issuer: document.getElementById('wd-name-issuer').value.trim(),
+        issuerPos: document.getElementById('wd-pos-issuer').value.trim(),
+        approver: document.getElementById('wd-name-approver').value.trim(),
+        approverPos: document.getElementById('wd-pos-approver').value.trim(),
+      };
+
+      const btn = document.getElementById('btn-submit-slip');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+      // เก็บ meta เป็น JSON ใน note field
+      const r = await api('createBatch', { rows: cart, note: JSON.stringify(meta), slip_id: slipNumber, department: currentUser ? (currentUser.department || '') : '' });
+
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="file-check" class="inline w-4 h-4 mr-1 align-text-bottom"></i>ยืนยันใบเบิก';
+      lucide.createIcons();
+
+      if (r.isOk) {
+        cart = [];
+        renderCart();
+        ['wd-slip-number', 'wd-name-requester', 'wd-pos-requester', 'wd-dept-requester',
+          'wd-name-issuer', 'wd-pos-issuer',
+          'wd-name-approver', 'wd-pos-approver'].forEach(id => document.getElementById(id).value = '');
+        showToast('บันทึกใบเบิกแล้ว', 'bg-emerald-600');
+        await loadData();
+        viewSlip(r.slip_id);
+      } else {
+        showToast('เกิดข้อผิดพลาด: ' + (r.error || ''), 'bg-rose-500');
+      }
+    }
+
+    // ========================
+    // Slip Viewer
+    // ========================
+    // ─── helper: build official form HTML from slip data ───────────────
+    function buildOfficialForm(sid, rows) {
+      const d = rows[0].created_at ? new Date(rows[0].created_at) : new Date();
+
+      // parse meta (stored as JSON in note field)
+      let meta = {};
+      try { meta = JSON.parse(rows[0].note || '{}'); } catch (e) { meta = { requester: rows[0].note || '' }; }
+
+      const slipNo = meta.slipNumber || sid.slice(0, 8).toUpperCase();
+      const req = meta.requester || '';
+      const reqPos = meta.requesterPos || '';
+      const reqDept = meta.requesterDept || '';
+      const issuer = meta.issuer || '';
+      const issPos = meta.issuerPos || '';
+      const appr = meta.approver || '';
+      const apprPos = meta.approverPos || '';
+
+      const thMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+        'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+      const day = d.getDate();
+      const month = thMonths[d.getMonth()];
+      const year = d.getFullYear() + 543;
+
+      // DocFont splits Roboto (digits/Latin) vs Sarabun (Thai) via unicode-range
+      // so plain numbers will automatically render with Roboto, not TH Sarabun
+      const num = n => String(n);
+
+      const MAX_ROWS = 15;
+      let tableRows = '';
+      for (let i = 0; i < MAX_ROWS; i++) {
+        const r = rows[i];
+        tableRows += `<tr style="height:5px">
+      <td style="text-align:center;width:8%">${num(i + 1)}</td>
+      <td style="width:38%;text-align:left;padding-left: 10px">${r ? esc(r.item_name) : '&nbsp;'}</td>
+      <td style="text-align:center;width:14%">${r ? esc(r.unit || '') : '&nbsp;'}</td>
+      <td style="text-align:center;width:13%">${r ? num(r.quantity) : '&nbsp;'}</td>
+      <td style="text-align:center;width:13%">${r ? num(r.quantity) : '&nbsp;'}</td>
+      <td style="width:14%">&nbsp;</td>
+    </tr>`;
+      }
+
+      return `<div class="official-form">
+    <br>
+        <div class="form-title">ใบเบิกวัสดุสำนักงาน</div>
+
+        <div class="form-header form-header-row">
+          <div class="form-header-left">เลขที่&nbsp;${esc(slipNo)}</div>
+          <div class="form-header-right">
+            <div>สำนักคลัง เทศบาลนครขอนแก่น</div>
+            <div>อำเภอเมือง จังหวัดขอนแก่น</div>
+          </div>
+        </div>
+
+        <div class="form-date">
+          วันที่&nbsp;${num(day)}&nbsp;เดือน&nbsp;${esc(month)}&nbsp;พ.ศ.&nbsp;${num(year)}
+        </div>
+    <br>
+
+    <div class="form-section-sm" style="word-break: keep-all; overflow-wrap: break-word;">
+      ข้าพเจ้า&nbsp;${esc(req)}&nbsp;ตำแหน่ง&nbsp;${esc(reqPos)}&nbsp;
+      <span style="white-space:nowrap" >ฝ่าย&nbsp;${esc(reqDept)}</span>
+    </div>
+
+    <div class="form-section-sm">
+      ขอเบิกวัสดุเพื่อใช้ในราชการ&nbsp;จำนวน&nbsp;${num(rows.length)}&nbsp;รายการ&nbsp;ดังต่อไปนี้
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align:center;width:8%">ลำดับที่</th>
+          <th style="text-align:center;width:42%">รายการ</th>
+          <th style="text-align:center;width:10%">หน่วยนับ</th>
+          <th style="text-align:center;width:13%">จำนวนเบิก</th>
+          <th style="text-align:center;width:13%">จำนวนจ่าย</th>
+          <th style="text-align:center;width:14%">หมายเหตุ</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+
+    <div class="sig-wrap">
+      <br>
+      <div class="sig-grid">
+        <div class="sig-col">
+          <div>(ลงชื่อ)............................................ผู้เบิก</div>
+          <div>(&nbsp;${esc(req)}&nbsp;)</div>
+          <div>ตำแหน่ง&nbsp;${esc(reqPos) || '..............................'}</div>
+        </div>
+        <div class="sig-col">
+          <div>(ลงชื่อ)............................................ผู้จ่าย</div>
+          <div>(&nbsp;${esc(issuer)}&nbsp;)</div>
+          <div>ตำแหน่ง&nbsp;${esc(issPos) || '..............................'}</div>
+        </div>
+      </div>
+      <br><br>
+      <div class="sig-approver">
+        <div>(ลงชื่อ).........................................ผู้อนุมัติ</div>
+        <div>(&nbsp;${esc(appr)}&nbsp;)</div>
+        <div>ตำแหน่ง&nbsp;${esc(apprPos) || '.........................'}</div>
+      </div>
+    </div>
+  </div>`;
+    }
+
+    function viewSlip(sid) {
+      const rows = allRecords.filter(r => String(r.slip_id) === String(sid));
+      if (!rows.length) return;
+      currentSlipData = { sid, rows };
+      document.getElementById('slip-body').innerHTML = buildOfficialForm(sid, rows);
+      document.getElementById('slip-overlay').classList.remove('hidden');
+    }
+
+    function closeSlip() {
+      document.getElementById('slip-overlay').classList.add('hidden');
+      currentSlipData = null;
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) return resolve();
+        const s = document.createElement('script');
+        s.src = src; s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+
+    async function printSlip() {
+      if (!currentSlipData) return;
+      const { sid, rows } = currentSlipData;
+      const formHtml = buildOfficialForm(sid, rows);
+
+      // แสดง loading
+      showToast('กำลังสร้าง PDF...', 'bg-blue-500');
+
+      // โหลด library
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+
+      // สร้าง iframe ซ่อน render ฟอร์ม
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;height:1123px;border:none;visibility:hidden;';
+      document.body.appendChild(iframe);
+
+iframe.contentDocument.write(`<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap" rel="stylesheet">
+<style>
+
+/*
+  Strategy: use Roboto (from Google Fonts) for digits/Latin only via unicode-range.
+  Roboto has NO Thai digit substitution. Sarabun handles Thai text.
+  unicode-range splits rendering at the font level — Chrome cannot override this.
+*/
+@font-face {
+  font-family: "DocFont";
+  src: url('https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Mu4mxK.woff2') format('woff2');
+  unicode-range: U+0030-0039, U+0020-U+002F, U+003A-U+0040, U+0041-U+007E, U+00A0;
+  /* digits 0-9, basic Latin, punctuation — NOT Thai range */
+}
+@font-face {
+  font-family: "DocFont";
+  src: url('https://fonts.gstatic.com/s/sarabun/v13/DtVmJx26TKEr37c9YBBx_nE.woff2') format('woff2');
+  unicode-range: U+0E00-U+0E7F, U+200C-U+200D, U+25CC;
+  /* Thai characters only */
+}
+
+html { -webkit-locale: "en"; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 794px; height: 1123px; overflow: hidden;
+    font-family: "DocFont", "Sarabun", sans-serif;
+    font-size: 12pt; line-height: 1.3; color: #000; background: #fff;
+    padding: 42px 48px 42px 60px; }
+  .form-title { font-size: 13pt; font-weight: bold; text-align: center; line-height: 1.4; }
+  .form-header-row { display: table; width: 100%; }
+  .form-header-left  { display: table-cell; vertical-align: top; font-size: 12pt; line-height: 1.3; }
+  .form-header-right { display: table-cell; text-align: right; vertical-align: top; font-size: 12pt; line-height: 1.3; }
+  .form-date { text-align: right; font-size: 12pt; line-height: 1.3; }
+  .form-section-sm { font-size: 12pt; line-height: 1.3; }
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 8px;
+  border: 1px solid rgba(0,0,0,0.45); /* ขอบนอก */
+}
+  td, th {
+  border: 1px solid rgba(0,0,0,0.45);
+  font-size: 10pt;
+  height: auto;
+  line-height: 1.4;
+  padding-bottom: 15px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+thead th {
+  font-size: 12pt;
+  font-weight: bold;
+
+  height: 15px;
+  line-height: 15px;
+
+  padding-bottom: 20px;
+
+  text-align: center;
+  vertical-align: middle;
+}
+  .sig-wrap { margin-top: 30px; }
+  .sig-grid { display: table; width: 100%; }
+  .sig-col  { display: table-cell; width: 50%; text-align: center; line-height: 1.3; vertical-align: top; font-size: 12pt; }
+  .sig-approver { text-align: center; margin-top: 30px; line-height: 1.3; font-size: 12pt; }
+</style></head><body>${formHtml}</body></html>`);
+      iframe.contentDocument.close();
+
+      // รอ render เสร็จ
+      await new Promise(r => setTimeout(r, 800));
+
+      const canvas = await html2canvas(iframe.contentDocument.body, {
+        scale: 3, useCORS: true, backgroundColor: '#ffffff',
+        width: 794, height: 1123,
+        windowWidth: 794, windowHeight: 1123
+      });
+      document.body.removeChild(iframe);
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297);
+
+      const url = URL.createObjectURL(pdf.output('blob'));
+      window.open(url, '_blank');
+    }
+
+    // ========================
+    // Add (รับเข้า)
+    // ========================
+    function updateAddUnit() {
+      const name = document.getElementById('add-name').value.trim();
+      const unitInput = document.getElementById('add-unit');
+      // ถ้าผู้ใช้ยังไม่ได้แก้หน่วยนับเอง (หรือว่างอยู่) ให้เติมอัตโนมัติ
+      if (!unitInput.dataset.userEdited) {
+        unitInput.value = name ? findUnit(name) : '';
+        unitInput.placeholder = name ? '' : 'เช่น อัน, ม้วน, รีม';
+      }
+    }
+
+    async function handleAdd() {
+      const name = document.getElementById('add-name').value.trim();
+      const qty = parseInt(document.getElementById('add-qty').value);
+      if (!name || !qty || qty < 1) { showToast('กรุณากรอกข้อมูลให้ครบ', 'bg-amber-500'); return; }
+
+      const unitInput = document.getElementById('add-unit');
+      const unit = unitInput.value.trim() || findUnit(name);
+
+      const btn = document.getElementById('btn-add');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+      const r = await api('create', {
+        data: {
+          type: 'in', item_name: name, quantity: qty,
+          unit: unit,
+          note: document.getElementById('add-note').value.trim(),
+          created_at: new Date().toISOString(),
+          department: currentUser ? (currentUser.department || '') : ''
+        }
+      });
+
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="plus" class="inline w-4 h-4 mr-1 align-text-bottom"></i>เพิ่มเข้าสต็อก';
+      lucide.createIcons();
+
+      if (r.isOk) {
+        document.getElementById('add-name').value = '';
+        document.getElementById('add-qty').value = '';
+        unitInput.value = '';
+        delete unitInput.dataset.userEdited;
+        document.getElementById('add-note').value = '';
+        showToast('เพิ่มวัสดุเรียบร้อย', 'bg-emerald-600');
+        await loadData();
+      } else { showToast('เกิดข้อผิดพลาด: ' + (r.error || ''), 'bg-rose-500'); }
+    }
+
+    // ========================
+    // Delete helpers
+    // ========================
+    function askDeleteRecord(id) {
+      const rec = allRecords.find(r => String(r.id) === String(id));
+      const label = rec ? `รับเข้า: ${rec.item_name} ×${rec.quantity}` : id;
+      openConfirm('ลบรายการนี้?', label, async () => {
+        const r = await api('delete', { id });
+        if (r.isOk) { showToast('ลบแล้ว', 'bg-slate-700'); await loadData(); }
+        else showToast('เกิดข้อผิดพลาด', 'bg-rose-500');
+      });
+    }
+
+    function askDeleteSlip(sid) {
+      const rows = allRecords.filter(r => String(r.slip_id) === String(sid));
+      openConfirm('ลบใบเบิกนี้?', `${rows.length} รายการ — จะคืนสต็อกทั้งหมด`, async () => {
+        const r = await api('deleteSlip', { slip_id: sid });
+        if (r.isOk) { showToast('ลบใบเบิกแล้ว', 'bg-slate-700'); await loadData(); }
+        else showToast('เกิดข้อผิดพลาด', 'bg-rose-500');
+      });
+    }
+
+    function openConfirm(title, text, fn) {
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-text').textContent = text;
+      pendingConfirmFn = fn;
+      document.getElementById('confirm-overlay').classList.remove('hidden');
+    }
+    function cancelConfirm() {
+      pendingConfirmFn = null;
+      document.getElementById('confirm-overlay').classList.add('hidden');
+    }
+    async function doConfirm() {
+      if (!pendingConfirmFn) return;
+      const fn = pendingConfirmFn;
+      cancelConfirm();
+      await fn();
+    }
+
+    // ========================
+    // Tabs & Filter
+    // ========================
+    function switchTab(tab) {
+      currentTab = tab;
+      ['stock', 'add', 'withdraw', 'history', 'dashboard', 'users'].forEach(t => {
+        document.getElementById('panel-' + t).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById('tab-' + t);
+        if (btn) {
+          if (t === tab) {
+            btn.classList.add('tab-active', 'border-orange-500', 'text-orange-500');
+            btn.classList.remove('text-slate-500');
+          } else {
+            btn.classList.remove('tab-active', 'border-orange-500', 'text-orange-500');
+            btn.classList.add('text-slate-500');
+          }
+        }
+      });
+      if (tab === 'withdraw') { populateWithdrawSelect(); renderCart(); }
+      if (tab === 'history') renderHistory();
+      if (tab === 'users' && currentUser && currentUser.role === 'admin') loadUsers();
+      if (tab === 'dashboard') renderDashboard();
+    }
+
+    function filterHistory(f) {
+      historyFilter = f;
+      ['all', 'in', 'slip'].forEach(t => {
+        const btn = document.getElementById('hf-' + t);
+        btn.className = t === f
+          ? 'px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-white'
+          : 'px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200';
+      });
+      renderHistory();
+    }
+
+    // ========================
+    // UI Helpers
+    // ========================
+    function setSyncStatus(state) {
+      const el = document.getElementById('sync-status');
+      if (state === 'loading') el.innerHTML = '<i data-lucide="loader" class="w-3 h-3 animate-spin inline"></i> กำลังโหลด...';
+      else if (state === 'ok') el.innerHTML = '<i data-lucide="check-circle" class="w-3 h-3 inline"></i> ซิงค์แล้ว';
+      else el.innerHTML = '<i data-lucide="wifi-off" class="w-3 h-3 inline"></i> ออฟไลน์';
+      lucide.createIcons();
+    }
+
+    function showToast(msg, bg) {
+      const t = document.getElementById('toast');
+      const inner = document.getElementById('toast-inner');
+      inner.textContent = msg;
+      inner.className = `px-4 py-2.5 rounded-lg shadow-lg text-sm font-medium text-white ${bg} toast-enter`;
+      t.classList.remove('hidden');
+      setTimeout(() => {
+        inner.classList.remove('toast-enter');
+        inner.classList.add('toast-exit');
+        setTimeout(() => t.classList.add('hidden'), 300);
+      }, 2200);
+    }
+
+    // แปลงเลขไทย → อารบิก ทุกที่
+function toArabic(s) {
+  const th = '๐๑๒๓๔๕๖๗๘๙';
+  return String(s).replace(/[๐-๙]/g, d => th.indexOf(d));
+}
+
+function thDate(d) {
+  const str = d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' }) + ' ' +
+    d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+  return toArabic(str);
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+    // ========================
+    // Update Stock
+    // ========================
+    let updateStockTarget = { name: '', currentQty: 0, unit: '' };
+    let updateStockType = 'add';
+
+    function openUpdateStock(name, currentQty, unit) {
+      updateStockTarget = { name, currentQty, unit };
+      updateStockType = 'add';
+      document.getElementById('update-stock-name').textContent = name;
+      document.getElementById('update-stock-current').textContent = currentQty + ' ' + unit;
+      document.getElementById('update-stock-qty').value = '';
+      document.getElementById('update-stock-note').value = '';
+      setUpdateType('add');
+      document.getElementById('update-stock-overlay').classList.remove('hidden');
+    }
+
+    function closeUpdateStock() {
+      document.getElementById('update-stock-overlay').classList.add('hidden');
+    }
+
+    function setUpdateType(type) {
+      updateStockType = type;
+      const addBtn = document.getElementById('update-type-add');
+      const setBtn = document.getElementById('update-type-set');
+      if (type === 'add') {
+        addBtn.className = 'flex-1 py-2 rounded-lg text-sm font-medium border-2 border-emerald-500 bg-emerald-50 text-emerald-700';
+        setBtn.className = 'flex-1 py-2 rounded-lg text-sm font-medium border-2 border-slate-200 bg-white text-slate-600';
+      } else {
+        setBtn.className = 'flex-1 py-2 rounded-lg text-sm font-medium border-2 border-blue-500 bg-blue-50 text-blue-700';
+        addBtn.className = 'flex-1 py-2 rounded-lg text-sm font-medium border-2 border-slate-200 bg-white text-slate-600';
+      }
+    }
+
+    async function handleUpdateStock() {
+      const qty = parseInt(document.getElementById('update-stock-qty').value);
+      if (isNaN(qty) || qty < 0) { showToast('กรุณาระบุจำนวนที่ถูกต้อง', 'bg-amber-500'); return; }
+
+      const { name, currentQty, unit } = updateStockTarget;
+      let addQty;
+
+      if (updateStockType === 'add') {
+        addQty = qty;
+      } else {
+        // ตั้งค่าใหม่: คำนวณผลต่างแล้วเพิ่ม/ลด
+        addQty = qty - currentQty;
+      }
+
+      if (addQty === 0) { showToast('ไม่มีการเปลี่ยนแปลง', 'bg-slate-500'); closeUpdateStock(); return; }
+
+      const note = document.getElementById('update-stock-note').value.trim();
+      const btn = document.getElementById('btn-update-stock-ok');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+      const r = await api('create', {
+        data: {
+          type: addQty > 0 ? 'in' : 'out',
+          item_name: name,
+          quantity: Math.abs(addQty),
+          unit: unit,
+          note: note || (updateStockType === 'set' ? 'ปรับสต็อก (ตั้งค่าใหม่)' : 'ปรับสต็อก'),
+          created_at: new Date().toISOString(),
+          department: currentUser ? (currentUser.department || '') : ''
+        }
+      });
+
+      btn.disabled = false; btn.textContent = 'บันทึก';
+
+      if (r.isOk) {
+        closeUpdateStock();
+        showToast('อัปเดตสต็อกเรียบร้อย', 'bg-emerald-600');
+        await loadData();
+      } else {
+        showToast('เกิดข้อผิดพลาด: ' + (r.error || ''), 'bg-rose-500');
+      }
+    }
+
+    // ========================
+    // Rename Item
+    // ========================
+    let renameTarget = { name: '', unit: '' };
+
+    function openRenameItem(name, unit) {
+      renameTarget = { name, unit };
+      document.getElementById('rename-old-name').textContent = name;
+      document.getElementById('rename-new-name').value = name;
+      document.getElementById('rename-unit').value = unit;
+      document.getElementById('rename-overlay').classList.remove('hidden');
+      setTimeout(() => {
+        const el = document.getElementById('rename-new-name');
+        el.focus(); el.select();
+      }, 50);
+    }
+
+    function closeRenameItem() {
+      document.getElementById('rename-overlay').classList.add('hidden');
+    }
+
+    async function handleRenameItem() {
+      const newName = document.getElementById('rename-new-name').value.trim();
+      const newUnit = document.getElementById('rename-unit').value.trim();
+      if (!newName) { showToast('กรุณาระบุชื่อใหม่', 'bg-amber-500'); return; }
+      if (newName === renameTarget.name && newUnit === renameTarget.unit) {
+        showToast('ไม่มีการเปลี่ยนแปลง', 'bg-slate-500'); closeRenameItem(); return;
+      }
+
+      // ตรวจสอบชื่อซ้ำ (ถ้าเปลี่ยนชื่อ)
+      if (newName !== renameTarget.name) {
+        const map = getStockMap();
+        if (map[newName] !== undefined) {
+          showToast('มีวัสดุชื่อนี้อยู่แล้ว', 'bg-rose-500'); return;
+        }
+      }
+
+      const btn = document.getElementById('btn-rename-ok');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+      // อัปเดตทุก record ที่มีชื่อเดิม
+      const targets = allRecords.filter(r => r.item_name === renameTarget.name);
+      let success = true;
+
+      for (const rec of targets) {
+        const r = await api('update', {
+          id: rec.id,
+          data: { item_name: newName, unit: newUnit || rec.unit }
+        });
+        if (!r.isOk) { success = false; break; }
+      }
+
+      btn.disabled = false; btn.textContent = 'บันทึก';
+
+      if (success) {
+        closeRenameItem();
+        showToast(`เปลี่ยนชื่อเป็น "${newName}" แล้ว`, 'bg-emerald-600');
+        await loadData();
+      } else {
+        showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'bg-rose-500');
+      }
+    }
+
+    // ========================
+    // USER SYSTEM
+    // ========================
+    let currentUser = null;    // { id, username, fullname, position, department, role }
+    let userModalMode = 'add'; // 'add' | 'edit'
+    let userEditId    = null;
+    let allUsers      = [];
+
+    function showLoginOverlay() {
+      document.getElementById('login-overlay').classList.remove('hidden');
+    }
+    function hideLoginOverlay() {
+      document.getElementById('login-overlay').classList.add('hidden');
+    }
+
+    async function handleLogin() {
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errEl    = document.getElementById('login-error');
+      const btn      = document.getElementById('btn-login');
+      errEl.classList.add('hidden');
+
+      if (!username || !password) { errEl.textContent = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน'; errEl.classList.remove('hidden'); return; }
+
+      btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ...';
+      const r = await api('login', { username, password });
+      btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
+
+      if (r.isOk) {
+        currentUser  = r.user;
+        sessionToken = r.token;
+        // บันทึก session ไว้ใน cookie อายุ 1 วัน
+        setCookie('gasToken', r.token, 1);
+        setCookie('gasUser',  JSON.stringify(r.user), 1);
+        hideLoginOverlay();
+        applyUserUI();
+        await loadData();
+        if (currentUser.role === 'admin') await loadUsers();
+      } else {
+        errEl.textContent = r.error || 'เข้าสู่ระบบไม่สำเร็จ';
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    function handleLogout() {
+      closeUserMenu();
+      // แจ้ง server ลบ session
+      if (sessionToken) api('logout', { token: sessionToken });
+      // ล้าง client-side session
+      sessionToken = null;
+      deleteCookie('gasToken');
+      deleteCookie('gasUser');
+      currentUser = null;
+      allUsers    = [];
+      document.getElementById('user-info-btn').classList.add('hidden');
+      document.getElementById('user-info-btn').classList.remove('flex');
+      // ซ่อน tab users
+      document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+      // กลับไปหน้า login
+      document.getElementById('login-username').value = '';
+      document.getElementById('login-password').value = '';
+      document.getElementById('login-error').classList.add('hidden');
+      showLoginOverlay();
+    }
+
+    function applyUserUI() {
+      if (!currentUser) return;
+      const initial = (currentUser.fullname || currentUser.username).charAt(0).toUpperCase();
+      document.getElementById('user-avatar').textContent   = initial;
+      document.getElementById('user-display-name').textContent = currentUser.fullname || currentUser.username;
+      const btn = document.getElementById('user-info-btn');
+      btn.classList.remove('hidden');
+      btn.classList.add('flex');
+
+      // Admin tabs
+      if (currentUser.role === 'admin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+      } else {
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+      }
+
+      // แสดง/ซ่อน banner กรองฝ่าย
+      const banner = document.getElementById('dept-filter-banner');
+      if (currentUser.role !== 'admin' && currentUser.department) {
+        document.getElementById('dept-filter-label').textContent = currentUser.department;
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+
+      // Auto-fill ชื่อ/ตำแหน่ง/ฝ่าย ในใบเบิก
+      if (currentUser.fullname)   document.getElementById('wd-name-requester').value  = currentUser.fullname;
+      if (currentUser.position)   document.getElementById('wd-pos-requester').value   = currentUser.position;
+      if (currentUser.department) document.getElementById('wd-dept-requester').value  = currentUser.department;
+    }
+
+    function openUserMenu() {
+      if (!currentUser) return;
+      const initial = (currentUser.fullname || currentUser.username).charAt(0).toUpperCase();
+      document.getElementById('menu-avatar').textContent     = initial;
+      document.getElementById('menu-fullname').textContent   = currentUser.fullname || currentUser.username;
+      document.getElementById('menu-role-badge').textContent = currentUser.role === 'admin' ? '⭐ แอดมิน' : '👤 ผู้ใช้';
+      document.getElementById('menu-position').textContent   = currentUser.position   || '-';
+      document.getElementById('menu-department').textContent = currentUser.department || '-';
+      document.getElementById('user-menu-overlay').classList.remove('hidden');
+      lucide.createIcons();
+    }
+    function closeUserMenu() {
+      document.getElementById('user-menu-overlay').classList.add('hidden');
+    }
+
+    // ---- Change Password ----
+    function openChangePasswordModal() {
+      document.getElementById('cpw-old').value = '';
+      document.getElementById('cpw-new').value = '';
+      document.getElementById('cpw-confirm').value = '';
+      document.getElementById('cpw-error').classList.add('hidden');
+      document.getElementById('change-pw-overlay').classList.remove('hidden');
+    }
+    function closeChangePasswordModal() {
+      document.getElementById('change-pw-overlay').classList.add('hidden');
+    }
+    async function handleChangePassword() {
+      const oldPw  = document.getElementById('cpw-old').value;
+      const newPw  = document.getElementById('cpw-new').value;
+      const confirm= document.getElementById('cpw-confirm').value;
+      const errEl  = document.getElementById('cpw-error');
+      errEl.classList.add('hidden');
+
+      if (!oldPw || !newPw || !confirm) { errEl.textContent = 'กรุณากรอกข้อมูลให้ครบ'; errEl.classList.remove('hidden'); return; }
+      if (newPw.length < 6) { errEl.textContent = 'รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร'; errEl.classList.remove('hidden'); return; }
+      if (newPw !== confirm) { errEl.textContent = 'รหัสผ่านใหม่ไม่ตรงกัน'; errEl.classList.remove('hidden'); return; }
+
+      const btn = document.getElementById('btn-cpw');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+      const r = await api('changePassword', { id: currentUser.id, oldPassword: oldPw, newPassword: newPw });
+      btn.disabled = false; btn.textContent = 'บันทึก';
+
+      if (r.isOk) {
+        closeChangePasswordModal();
+        showToast('เปลี่ยนรหัสผ่านเรียบร้อย', 'bg-emerald-600');
+      } else {
+        errEl.textContent = r.error || 'เกิดข้อผิดพลาด';
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    // ---- User Management (Admin) ----
+    async function loadUsers() {
+      const r = await api('getUsers');
+      if (r.isOk) { allUsers = r.users; renderUsers(); }
+    }
+
+    function renderUsers() {
+      const list  = document.getElementById('users-list');
+      const empty = document.getElementById('users-empty');
+      if (!allUsers.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+      list.innerHTML = allUsers.map(u => {
+        const isAdmin   = u.role === 'admin';
+        const isActive  = u.active !== false && u.active !== 'FALSE';
+        const initial   = (u.fullname || u.username || '?').charAt(0).toUpperCase();
+        const isSelf    = currentUser && String(u.id) === String(currentUser.id);
+        return `<div class="card-appear bg-white rounded-xl border border-slate-100 shadow-sm p-3 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full ${isAdmin ? 'bg-orange-400' : 'bg-blue-400'} flex-shrink-0 flex items-center justify-center text-white font-bold text-sm">${esc(initial)}</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <p class="font-medium text-slate-800 text-sm">${esc(u.fullname || '-')}</p>
+              <span class="text-xs px-1.5 py-0.5 rounded-full ${isAdmin ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}">${isAdmin ? 'แอดมิน' : 'ผู้ใช้'}</span>
+              ${!isActive ? '<span class="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">ระงับ</span>' : ''}
+              ${isSelf ? '<span class="text-xs text-slate-400">(คุณ)</span>' : ''}
+            </div>
+            <p class="text-xs text-slate-400 truncate">${esc(u.username)} · ${esc(u.position || '-')} · ${esc(u.department || '-')}</p>
+          </div>
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <button onclick="openEditUserModal('${u.id}')"
+              class="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-500 hover:text-amber-700 transition-colors" title="แก้ไข">
+              <i data-lucide="pencil" class="w-4 h-4"></i>
+            </button>
+            ${!isSelf ? `<button onclick="askDeleteUser('${u.id}', '${esc(u.fullname || u.username)}')"
+              class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-400 hover:text-rose-600 transition-colors" title="ลบ">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function openAddUserModal() {
+      userModalMode = 'add'; userEditId = null;
+      document.getElementById('user-modal-title').textContent = 'เพิ่มผู้ใช้ใหม่';
+      document.getElementById('user-modal-username-row').classList.remove('hidden');
+      document.getElementById('user-modal-password-row').classList.remove('hidden');
+      document.getElementById('um-active-row').classList.add('hidden');
+      ['um-username','um-password','um-fullname','um-position','um-department'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('um-role').value = 'user';
+      document.getElementById('user-modal-overlay').classList.remove('hidden');
+    }
+
+    function openEditUserModal(id) {
+      const u = allUsers.find(x => String(x.id) === String(id));
+      if (!u) return;
+      userModalMode = 'edit'; userEditId = id;
+      document.getElementById('user-modal-title').textContent = 'แก้ไขข้อมูลผู้ใช้';
+      document.getElementById('user-modal-username-row').classList.add('hidden');
+      document.getElementById('user-modal-password-row').classList.add('hidden');
+      document.getElementById('um-active-row').classList.remove('hidden');
+      document.getElementById('um-fullname').value   = u.fullname   || '';
+      document.getElementById('um-position').value   = u.position   || '';
+      document.getElementById('um-department').value = u.department || '';
+      document.getElementById('um-role').value       = u.role       || 'user';
+      document.getElementById('um-active').checked   = u.active !== false && u.active !== 'FALSE';
+      document.getElementById('user-modal-overlay').classList.remove('hidden');
+    }
+
+    function closeUserModal() {
+      document.getElementById('user-modal-overlay').classList.add('hidden');
+    }
+
+    async function handleSaveUser() {
+      const btn = document.getElementById('btn-save-user');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+      let r;
+      if (userModalMode === 'add') {
+        const data = {
+          username:   document.getElementById('um-username').value.trim(),
+          password:   document.getElementById('um-password').value,
+          fullname:   document.getElementById('um-fullname').value.trim(),
+          position:   document.getElementById('um-position').value.trim(),
+          department: document.getElementById('um-department').value.trim(),
+          role:       document.getElementById('um-role').value,
+        };
+        r = await api('createUser', { data });
+      } else {
+        const data = {
+          fullname:   document.getElementById('um-fullname').value.trim(),
+          position:   document.getElementById('um-position').value.trim(),
+          department: document.getElementById('um-department').value.trim(),
+          role:       document.getElementById('um-role').value,
+          active:     document.getElementById('um-active').checked,
+        };
+        r = await api('updateUser', { id: userEditId, data });
+      }
+      btn.disabled = false; btn.textContent = 'บันทึก';
+      if (r.isOk) {
+        closeUserModal();
+        showToast(userModalMode === 'add' ? 'เพิ่มผู้ใช้แล้ว' : 'อัปเดตข้อมูลแล้ว', 'bg-emerald-600');
+        await loadUsers();
+      } else {
+        showToast(r.error || 'เกิดข้อผิดพลาด', 'bg-rose-500');
+      }
+    }
+
+    function askDeleteUser(id, name) {
+      openConfirm('ลบผู้ใช้นี้?', name, async () => {
+        const r = await api('deleteUser', { id });
+        if (r.isOk) { showToast('ลบผู้ใช้แล้ว', 'bg-slate-700'); await loadUsers(); }
+        else showToast(r.error || 'เกิดข้อผิดพลาด', 'bg-rose-500');
+      });
+    }
+
+    // ========================
+    // DASHBOARD
+    // ========================
+    const DEPT_COLORS = [
+      'bg-blue-500','bg-emerald-500','bg-amber-500','bg-rose-500',
+      'bg-purple-500','bg-cyan-500','bg-orange-500','bg-teal-500'
+    ];
+    const DEPT_LIGHT = [
+      'bg-blue-50 text-blue-700 border-blue-200',
+      'bg-emerald-50 text-emerald-700 border-emerald-200',
+      'bg-amber-50 text-amber-700 border-amber-200',
+      'bg-rose-50 text-rose-700 border-rose-200',
+      'bg-purple-50 text-purple-700 border-purple-200',
+      'bg-cyan-50 text-cyan-700 border-cyan-200',
+      'bg-orange-50 text-orange-700 border-orange-200',
+      'bg-teal-50 text-teal-700 border-teal-200'
+    ];
+
+    let dashDeptFilter = '__all__'; // '__all__' หรือชื่อฝ่าย
+
+    function getDepts() {
+      const s = new Set();
+      allRecords.forEach(r => { if (r.department) s.add(r.department); });
+      return [...s].sort((a,b) => a.localeCompare(b, 'th'));
+    }
+
+    function getDeptColor(dept, depts, light = false) {
+      const i = depts.indexOf(dept) % DEPT_COLORS.length;
+      return light ? DEPT_LIGHT[i] : DEPT_COLORS[i];
+    }
+
+    function computeDashData(deptFilter) {
+      // กรอง records ตาม dept
+      const recs = deptFilter === '__all__'
+        ? allRecords
+        : allRecords.filter(r => r.department === deptFilter);
+
+      // คำนวณยอดรับเข้า/เบิกออก แต่ละชนิด
+      // "in"  นับทั้งหมด (รับเข้าจริง + ปรับสต็อกขึ้น + ตั้งค่าใหม่แล้วเพิ่ม)
+      // "out" นับเฉพาะที่มี slip_id (ใบเบิก) เท่านั้น
+      const itemMap = {}; // name -> { in: 0, out: 0, unit }
+      recs.forEach(r => {
+        const k = r.item_name;
+        if (!itemMap[k]) itemMap[k] = { in: 0, out: 0, unit: r.unit || '' };
+        if (r.type === 'in') itemMap[k].in += Number(r.quantity);
+        else if (r.type === 'out' && r.slip_id) itemMap[k].out += Number(r.quantity);
+      });
+
+      // สรุปแยกฝ่าย (เบิกออกจากใบเบิกเท่านั้น)
+      const deptMap = {}; // dept -> totalOut
+      recs.filter(r => r.type === 'out' && r.slip_id).forEach(r => {
+        const d = r.department || '(ไม่ระบุ)';
+        deptMap[d] = (deptMap[d] || 0) + Number(r.quantity);
+      });
+
+      // unique slips
+      const slips = new Set(recs.filter(r => r.slip_id).map(r => r.slip_id));
+
+      return { itemMap, deptMap, slipCount: slips.size, recCount: recs.length };
+    }
+
+    function renderDashboard() {
+      const isAdmin = currentUser && currentUser.role === 'admin';
+      const depts = getDepts();
+
+      // --- Dept filter tabs (admin only) ---
+      const tabsEl = document.getElementById('dash-dept-tabs');
+      if (isAdmin) {
+        const allActive = dashDeptFilter === '__all__';
+        let html = `<button onclick="setDashDept('__all__')"
+          class="px-3 py-1 rounded-full text-xs font-medium border transition-colors ${allActive ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
+          ทุกฝ่าย
+        </button>`;
+        depts.forEach((d, i) => {
+          const active = dashDeptFilter === d;
+          const cls = active
+            ? 'bg-slate-800 text-white border-slate-800'
+            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50';
+          html += `<button onclick="setDashDept('${esc(d)}')"
+            class="px-3 py-1 rounded-full text-xs font-medium border transition-colors ${cls}">
+            ${esc(d)}
+          </button>`;
+        });
+        tabsEl.innerHTML = html;
+        tabsEl.parentElement.classList.remove('hidden');
+      } else {
+        // user ทั่วไป: ล็อก filter เป็นฝ่ายตัวเอง แสดง badge ฝ่าย แต่ซ่อนปุ่มสลับ
+        dashDeptFilter = currentUser?.department || '__all__';
+        const dept = currentUser?.department;
+        if (dept) {
+          const colorIdx = depts.indexOf(dept) % DEPT_LIGHT.length;
+          tabsEl.innerHTML = `<span class="px-3 py-1 rounded-full text-xs font-medium border ${DEPT_LIGHT[colorIdx]}">
+            <i data-lucide="building-2" class="inline w-3 h-3 mr-1 align-text-bottom"></i>${esc(dept)}
+          </span>`;
+          tabsEl.parentElement.classList.remove('hidden');
+        } else {
+          tabsEl.parentElement.classList.add('hidden');
+        }
+      }
+
+      const { itemMap, deptMap, slipCount, recCount } = computeDashData(dashDeptFilter);
+
+      // --- KPI cards ---
+      const totalOut = Object.values(itemMap).reduce((s, v) => s + v.out, 0);
+      const totalIn  = Object.values(itemMap).reduce((s, v) => s + v.in, 0);
+      const itemCount = Object.keys(itemMap).length;
+      document.getElementById('dash-kpi').innerHTML = `
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-3 text-center">
+          <p class="text-xs text-slate-500">ชนิดวัสดุ</p>
+          <p class="font-heading text-xl font-bold text-slate-800">${itemCount}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-rose-100 p-3 text-center">
+          <p class="text-xs text-rose-500">ชิ้นที่เบิกออก</p>
+          <p class="font-heading text-xl font-bold text-rose-500">${totalOut}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-emerald-100 p-3 text-center">
+          <p class="text-xs text-emerald-600">ใบเบิกทั้งหมด</p>
+          <p class="font-heading text-xl font-bold text-emerald-600">${slipCount}</p>
+        </div>`;
+
+      // --- Top items bar chart ---
+      const topItems = Object.entries(itemMap)
+        .map(([name, v]) => ({ name, out: v.out, unit: v.unit }))
+        .filter(x => x.out > 0)
+        .sort((a, b) => b.out - a.out)
+        .slice(0, 10);
+      const maxOut = topItems[0]?.out || 1;
+      const topEl = document.getElementById('dash-top-items');
+      const topEmpty = document.getElementById('dash-top-empty');
+      if (!topItems.length) {
+        topEl.innerHTML = '';
+        topEmpty.classList.remove('hidden');
+      } else {
+        topEmpty.classList.add('hidden');
+        topEl.innerHTML = topItems.map((item, idx) => {
+          const pct = Math.round((item.out / maxOut) * 100);
+          const barColor = idx === 0 ? 'bg-rose-500' : idx < 3 ? 'bg-orange-400' : 'bg-slate-300';
+          return `<div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 w-5 text-right flex-shrink-0">${idx + 1}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between mb-0.5">
+                <span class="text-xs font-medium text-slate-700 truncate">${esc(item.name)}</span>
+                <span class="text-xs font-bold text-slate-600 ml-2 flex-shrink-0">${item.out} ${esc(item.unit)}</span>
+              </div>
+              <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div class="${barColor} h-2 rounded-full transition-all" style="width:${pct}%"></div>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+
+      // --- Dept breakdown bars (admin, all-dept view) ---
+      const breakdownEl = document.getElementById('dash-dept-breakdown');
+      const deptBarsEl = document.getElementById('dash-dept-bars');
+      if (isAdmin && dashDeptFilter === '__all__' && Object.keys(deptMap).length > 0) {
+        breakdownEl.classList.remove('hidden');
+        const deptEntries = Object.entries(deptMap).sort((a, b) => b[1] - a[1]);
+        const maxDept = deptEntries[0][1] || 1;
+        deptBarsEl.innerHTML = deptEntries.map(([dept, total]) => {
+          const pct = Math.round((total / maxDept) * 100);
+          const colorIdx = depts.indexOf(dept) % DEPT_COLORS.length;
+          const barCls = DEPT_COLORS[colorIdx];
+          const badgeCls = DEPT_LIGHT[colorIdx];
+          return `<div class="flex items-center gap-3">
+            <span class="text-xs px-2 py-0.5 rounded-full border flex-shrink-0 ${badgeCls}" style="min-width:6rem;text-align:center">${esc(dept)}</span>
+            <div class="flex-1 min-w-0">
+              <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                <div class="${barCls} h-2.5 rounded-full transition-all" style="width:${pct}%"></div>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-slate-600 flex-shrink-0 w-10 text-right">${total}</span>
+          </div>`;
+        }).join('');
+      } else {
+        breakdownEl.classList.add('hidden');
+      }
+
+      // --- Detail table ---
+      const tableBody = document.getElementById('dash-table-body');
+      const tableEmpty = document.getElementById('dash-table-empty');
+      const tableEntries = Object.entries(itemMap).sort((a, b) => b[1].out - a[1].out);
+      // ดึงสต็อกจริง (รวมการปรับสต็อกขึ้น/ลดทุกรายการ)
+      const realStockMap = getStockMap();
+      if (!tableEntries.length) {
+        tableBody.innerHTML = '';
+        tableEmpty.classList.remove('hidden');
+      } else {
+        tableEmpty.classList.add('hidden');
+        tableBody.innerHTML = tableEntries.map(([name, v], i) => {
+          const rem = realStockMap[name] ? realStockMap[name].qty : (v.in - v.out);
+          const remCls = rem <= 0 ? 'text-rose-500 font-bold' : rem <= 5 ? 'text-amber-500 font-semibold' : 'text-emerald-600';
+          const rowBg = i % 2 === 0 ? '' : 'bg-slate-50/60';
+          return `<tr class="${rowBg}">
+            <td class="py-1.5 pr-3 text-xs text-slate-400">${i + 1}</td>
+            <td class="py-1.5 pr-3 text-sm text-slate-700">${esc(name)} <span class="text-xs text-slate-400">${esc(v.unit)}</span></td>
+            <td class="py-1.5 pr-3 text-right text-sm text-emerald-600">${v.in}</td>
+            <td class="py-1.5 pr-3 text-right text-sm text-rose-500">${v.out}</td>
+            <td class="py-1.5 text-right text-sm ${remCls}">${rem}</td>
+          </tr>`;
+        }).join('');
+      }
+      lucide.createIcons();
+    }
+
+    function setDashDept(dept) {
+      dashDeptFilter = dept;
+      renderDashboard();
+    }
+
+    // ========================
+    // Init — restore session หรือแสดง login
+    // ========================
+    lucide.createIcons();
+
+    (async function initApp() {
+      const savedToken = getCookie('gasToken');
+      const savedUser  = getCookie('gasUser');
+
+      if (savedToken && savedUser) {
+        // ตรวจสอบกับ server ว่า session ยังใช้ได้
+        setSyncStatus('loading');
+        try {
+          const r = await api('checkSession', { token: savedToken });
+          if (r.isOk) {
+            sessionToken = savedToken;
+            currentUser  = r.user;
+            // อัปเดต user object ล่าสุดจาก server
+            setCookie('gasUser', JSON.stringify(r.user), 1);
+            applyUserUI();
+            await loadData();
+            if (currentUser.role === 'admin') await loadUsers();
+            return; // ไม่ต้องแสดง login
+          }
+        } catch (e) { /* network error → แสดง login */ }
+        // session หมดอายุ → ล้างแล้วแสดง login
+        deleteCookie('gasToken');
+        deleteCookie('gasUser');
+      }
+
+      showLoginOverlay();   // แสดง login เมื่อไม่มี session
+    })();
+  </script>
+</body>
+
+</html>
