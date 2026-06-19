@@ -323,6 +323,10 @@
           class="admin-only hidden text-slate-500 whitespace-nowrap px-4 py-2 text-sm font-medium hover:text-slate-700" role="tab">
           <i data-lucide="users" class="inline w-4 h-4 mr-1 align-text-bottom"></i>ผู้ใช้
         </button>
+        <button onclick="switchTab('personnel')" id="tab-personnel"
+          class="admin-only hidden text-slate-500 whitespace-nowrap px-4 py-2 text-sm font-medium hover:text-slate-700" role="tab">
+          <i data-lucide="list" class="inline w-4 h-4 mr-1 align-text-bottom"></i>รายชื่อ
+        </button>
       </div>
     </div>
 
@@ -385,6 +389,9 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-3">
           <h2 class="font-heading font-semibold text-lg text-slate-800 mb-3">สร้างใบเบิกวัสดุ</h2>
 
+          <!-- รายชื่อสำหรับช่วยพิมพ์เดาคำ (ผู้เบิก/ผู้จ่าย/ผู้อนุมัติ) -->
+          <datalist id="personnel-list"></datalist>
+
           <!-- ผู้เบิก -->
           <div class="border border-slate-100 rounded-xl p-3 bg-slate-50 mb-3 space-y-2">
             <p class="text-xs font-semibold text-emerald-700 uppercase tracking-wide">ผู้เบิก</p>
@@ -392,7 +399,7 @@
               <div class="sm:col-span-1">
                 <label class="block text-xs text-slate-500 mb-0.5">ชื่อ-สกุล <span
                     class="text-rose-500">*</span></label>
-                <input id="wd-name-requester" type="text"
+                <input id="wd-name-requester" type="text" autocomplete="off"
                   class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
                   placeholder="เช่น นางสาวสมใจ ใจดี">
               </div>
@@ -417,7 +424,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label class="block text-xs text-slate-500 mb-0.5">ชื่อ-สกุล</label>
-                <input id="wd-name-issuer" type="text"
+                <input id="wd-name-issuer" type="text" autocomplete="off"
                   class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
                   placeholder="ชื่อผู้จ่ายวัสดุ">
               </div>
@@ -436,7 +443,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label class="block text-xs text-slate-500 mb-0.5">ชื่อ-สกุล</label>
-                <input id="wd-name-approver" type="text"
+                <input id="wd-name-approver" type="text" autocomplete="off"
                   class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
                   placeholder="ชื่อผู้อนุมัติ">
               </div>
@@ -593,6 +600,24 @@
         <p id="users-empty" class="text-center text-slate-400 py-10 text-sm hidden">ยังไม่มีผู้ใช้</p>
       </section>
 
+      <!-- =================== PERSONNEL (รายชื่อ-ตำแหน่ง) =================== -->
+      <section id="panel-personnel" class="hidden">
+        <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h2 class="font-heading font-semibold text-lg text-slate-800">จัดการรายชื่อ-ตำแหน่ง</h2>
+          <button onclick="openAddPersonnelModal()"
+            class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium flex items-center gap-1">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>เพิ่มรายชื่อ
+          </button>
+        </div>
+        <div class="mb-3">
+          <input type="text" id="search-personnel" placeholder="🔍 ค้นหาชื่อหรือตำแหน่ง..."
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            oninput="renderPersonnelList()">
+        </div>
+        <div id="personnel-mgmt-list" class="space-y-2"></div>
+        <p id="personnel-mgmt-empty" class="text-center text-slate-400 py-10 text-sm hidden">ยังไม่มีรายชื่อ</p>
+      </section>
+
     </main><!-- /main -->
 
     <!-- Toast -->
@@ -644,6 +669,106 @@
             font-family:'Sarabun',sans-serif;
             font-size:13pt; line-height:1.35; color:#000;
           "></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== EDIT SLIP MODAL (admin only) =================== -->
+    <div id="edit-slip-overlay"
+      class="fixed inset-0 bg-black/40 z-50 hidden overlay-bg flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl w-full shadow-2xl flex flex-col" style="max-width:680px;max-height:92vh;">
+        <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">
+          <h3 class="font-heading font-bold text-slate-800">แก้ไขใบเบิกวัสดุ</h3>
+          <button onclick="closeEditSlipModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div class="overflow-y-auto flex-1 p-4 space-y-3">
+
+          <datalist id="item-names-list"></datalist>
+
+          <!-- เลขที่ใบเบิก -->
+          <div class="border border-slate-100 rounded-xl p-3 bg-slate-50 space-y-2">
+            <label class="block text-xs text-slate-500 mb-0.5">เลขที่ใบเบิก <span class="text-rose-500">*</span></label>
+            <input id="es-slip-number" type="text"
+              class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white font-mono">
+          </div>
+
+          <!-- ผู้เบิก -->
+          <div class="border border-slate-100 rounded-xl p-3 bg-slate-50 space-y-2">
+            <p class="text-xs font-semibold text-emerald-700 uppercase tracking-wide">ผู้เบิก</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">ชื่อ-สกุล <span class="text-rose-500">*</span></label>
+                <input id="es-name-requester" type="text" list="personnel-list" autocomplete="off"
+                  class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">ตำแหน่ง</label>
+                <input id="es-pos-requester" type="text"
+                  class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">ฝ่าย</label>
+                <input id="es-dept-requester" type="text"
+                  class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+              </div>
+            </div>
+          </div>
+
+          <!-- ผู้จ่าย -->
+          <div class="border border-slate-100 rounded-xl p-3 bg-slate-50 space-y-2">
+            <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">ผู้จ่าย</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">ชื่อ-สกุล</label>
+                <input id="es-name-issuer" type="text" list="personnel-list" autocomplete="off"
+                  class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">ตำแหน่ง</label>
+                <input id="es-pos-issuer" type="text"
+                  class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+              </div>
+            </div>
+          </div>
+
+          <!-- ผู้อนุมัติ -->
+          <div class="border border-slate-100 rounded-xl p-3 bg-slate-50 space-y-2">
+            <p class="text-xs font-semibold text-purple-600 uppercase tracking-wide">ผู้อนุมัติ</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">ชื่อ-สกุล</label>
+                <input id="es-name-approver" type="text" list="personnel-list" autocomplete="off"
+                  class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-0.5">ตำแหน่ง</label>
+                <input id="es-pos-approver" type="text"
+                  class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+              </div>
+            </div>
+          </div>
+
+          <!-- รายการวัสดุ -->
+          <div class="border border-slate-100 rounded-xl p-3 bg-slate-50 space-y-2">
+            <div class="flex items-center justify-between">
+              <p class="text-xs font-semibold text-slate-600 uppercase tracking-wide">รายการวัสดุ</p>
+              <button onclick="addEditSlipItem()"
+                class="px-2 py-1 rounded-lg bg-slate-700 hover:bg-slate-800 text-white text-xs font-medium flex items-center gap-1">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>เพิ่มรายการ
+              </button>
+            </div>
+            <div id="es-items-list" class="space-y-2"></div>
+            <p id="es-items-empty" class="text-center text-slate-400 py-4 text-xs hidden">ไม่มีรายการ</p>
+          </div>
+
+        </div>
+        <div class="flex gap-2 px-5 py-3.5 border-t border-slate-100 flex-shrink-0">
+          <button onclick="closeEditSlipModal()"
+            class="flex-1 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">ยกเลิก</button>
+          <button onclick="handleSaveEditSlip()" id="btn-save-edit-slip"
+            class="flex-1 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600">บันทึกการแก้ไข</button>
         </div>
       </div>
     </div>
@@ -904,6 +1029,39 @@
     </div>
   </div>
 
+  <!-- =================== ADD/EDIT PERSONNEL MODAL =================== -->
+  <div id="personnel-modal-overlay" class="fixed inset-0 bg-black/40 z-50 hidden overlay-bg flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl p-5 max-w-md w-full shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <p id="personnel-modal-title" class="font-heading font-semibold text-slate-800">เพิ่มรายชื่อใหม่</p>
+        <button onclick="closePersonnelModal()" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">ชื่อ-สกุล <span class="text-rose-500">*</span></label>
+          <input id="pm-name" type="text"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="เช่น นางสาวสมใจ ใจดี">
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">ตำแหน่ง</label>
+          <input id="pm-position" type="text"
+            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="เช่น นักวิชาการเงินและบัญชีปฏิบัติการ">
+        </div>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <button onclick="closePersonnelModal()"
+          class="flex-1 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">ยกเลิก</button>
+        <button onclick="handleSavePersonnel()" id="btn-save-personnel"
+          class="flex-1 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+
   <!-- =================== CHANGE PASSWORD MODAL =================== -->
   <div id="change-pw-overlay" class="fixed inset-0 bg-black/40 z-50 hidden overlay-bg flex items-center justify-center p-4">
     <div class="bg-white rounded-xl p-5 max-w-sm w-full shadow-xl">
@@ -991,6 +1149,7 @@ const unitMap = {
     // State
     // ========================
     let allRecords = [];
+    let personnelList = []; // [{name, position}] จากชีท "รายชื่อ" สำหรับช่วยพิมพ์เดาคำ+ใส่ตำแหน่ง auto
     let currentTab = 'stock';
     let historyFilter = 'slip';
     let cart = [];            // [{item_name, quantity, unit, maxQty}]
@@ -1044,15 +1203,49 @@ const unitMap = {
           populateWithdrawSelect();
           setSyncStatus('ok');
         } else { setSyncStatus('error'); showToast('โหลดข้อมูลล้มเหลว', 'bg-rose-500'); }
+        loadPersonnel(); // โหลดรายชื่อ-ตำแหน่งแบบขนาน ไม่บล็อกการแสดงผลหลัก
       } catch (e) {
         setSyncStatus('error');
         showToast('เชื่อมต่อ Server ไม่ได้ — ตรวจสอบ GAS_URL', 'bg-rose-500');
       }
     }
 
-    // ========================
-    // Stock map helpers
-    // ========================
+    async function loadPersonnel() {
+      try {
+        const r = await api('getPersonnel');
+        if (r.isOk) {
+          personnelList = r.personnel || [];
+          renderPersonnelDatalist();
+        }
+      } catch (e) { /* เงียบไว้ ไม่กระทบการทำงานหลัก */ }
+    }
+
+    function renderPersonnelDatalist() {
+      const dl = document.getElementById('personnel-list');
+      if (!dl) return;
+      dl.innerHTML = personnelList.map(p => `<option value="${esc(p.name)}"></option>`).join('');
+    }
+
+    // ช่วยพิมพ์เดาคำ: เมื่อพิมพ์ในช่องชื่อ ถ้าเจอชื่อที่ตรงกับชีท "รายชื่อ" ให้เติมตำแหน่งให้อัตโนมัติ
+    // (ยังแก้ไขตำแหน่งเองได้เสมอ เพราะแค่ "เติม" ให้ ไม่ได้ล็อกช่อง)
+    function autofillPosition(nameInputId, positionInputId) {
+      const nameVal = (document.getElementById(nameInputId).value || '').trim();
+      if (!nameVal) return;
+      const match = personnelList.find(p => p.name === nameVal);
+      if (match) {
+        document.getElementById(positionInputId).value = match.position;
+      }
+    }
+
+    function wirePersonnelAutofill(nameInputId, positionInputId) {
+      const el = document.getElementById(nameInputId);
+      if (!el) return;
+      el.setAttribute('list', 'personnel-list');
+      el.addEventListener('input', () => autofillPosition(nameInputId, positionInputId));
+      el.addEventListener('change', () => autofillPosition(nameInputId, positionInputId));
+    }
+
+
     function getStockMap() {
       const map = {};
       allRecords.forEach(r => {
@@ -1211,12 +1404,16 @@ const unitMap = {
       const d = rows[0].created_at ? new Date(rows[0].created_at) : null;
       const dateStr = d ? thDate(d) : '';
       let note = rows[0].note || '';
-      try { const m = JSON.parse(note); note = m.requester || note; } catch (e) { }
+      let slipNumber = '';
+      try { const m = JSON.parse(note); note = m.requester || note; slipNumber = m.slipNumber || ''; } catch (e) { }
       const totalItems = rows.reduce((s, r) => s + Number(r.quantity), 0);
       const dept = rows[0].department || '';
       const isAdmin = currentUser && currentUser.role === 'admin';
       const deptBadge = isAdmin && dept
         ? `<span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200">${esc(dept)}</span>`
+        : '';
+      const slipNoBadge = slipNumber
+        ? `<span class="text-xs px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200 font-mono">เลขที่ ${esc(slipNumber)}</span>`
         : '';
       const itemLines = rows.map(r =>
         `<div class="flex justify-between text-sm py-0.5">
@@ -1231,6 +1428,7 @@ const unitMap = {
       <div class="flex items-center gap-2 flex-wrap">
         <span class="text-xs px-2 py-0.5 rounded-full bg-rose-500 text-white font-medium">ใบเบิก</span>
         <span class="text-xs text-slate-500">${dateStr}</span>
+        ${slipNoBadge}
         ${deptBadge}
         ${note ? `<span class="text-xs text-slate-600 font-medium">${esc(note)}</span>` : ''}
       </div>
@@ -1238,6 +1436,9 @@ const unitMap = {
         <button onclick="viewSlip(this.dataset.sid)" data-sid="${esc(sid)}" class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-xs text-slate-600 hover:bg-slate-50 flex items-center gap-1">
           <i data-lucide="eye" class="w-3 h-3"></i>ดูใบเบิก
         </button>
+        ${isAdmin ? `<button onclick="openEditSlipModal(this.dataset.sid)" data-sid="${esc(sid)}" class="px-2 py-1 rounded-lg bg-white border border-amber-200 text-xs text-amber-600 hover:bg-amber-50 flex items-center gap-1">
+          <i data-lucide="pencil" class="w-3 h-3"></i>แก้ไข
+        </button>` : ''}
         <button onclick="askDeleteSlip(this.dataset.sid)" data-sid="${esc(sid)}" class="p-1.5 rounded-lg hover:bg-rose-100 text-rose-300 hover:text-rose-600 transition-colors">
           <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
         </button>
@@ -1591,6 +1792,161 @@ const unitMap = {
       currentSlipData = null;
     }
 
+    // ========================
+    // Edit Slip (admin only)
+    // ========================
+    let editSlipSid = null;
+    let editSlipOriginalRows = []; // แถวเดิมจาก allRecords ของใบเบิกนี้
+    let editSlipItems = [];        // รายการที่กำลังแก้ไข [{ id (ถ้ามีของเดิม), item_name, quantity, unit }]
+
+    function getAllItemNames() {
+      const s = new Set();
+      allRecords.forEach(r => { if (r.item_name) s.add(r.item_name); });
+      return [...s].sort((a, b) => a.localeCompare(b, 'th'));
+    }
+
+    function openEditSlipModal(sid) {
+      if (!currentUser || currentUser.role !== 'admin') return;
+      const rows = allRecords.filter(r => String(r.slip_id) === String(sid));
+      if (!rows.length) { showToast('ไม่พบใบเบิกนี้', 'bg-rose-500'); return; }
+
+      editSlipSid = sid;
+      editSlipOriginalRows = rows;
+      editSlipItems = rows.map(r => ({
+        id: r.id, item_name: r.item_name, quantity: Number(r.quantity) || 0, unit: r.unit || ''
+      }));
+
+      let meta = {};
+      try { meta = JSON.parse(rows[0].note || '{}'); } catch (e) { meta = {}; }
+
+      document.getElementById('es-slip-number').value   = meta.slipNumber || sid;
+      document.getElementById('es-name-requester').value = meta.requester || '';
+      document.getElementById('es-pos-requester').value  = meta.requesterPos || '';
+      document.getElementById('es-dept-requester').value = meta.requesterDept || '';
+      document.getElementById('es-name-issuer').value    = meta.issuer || '';
+      document.getElementById('es-pos-issuer').value     = meta.issuerPos || '';
+      document.getElementById('es-name-approver').value  = meta.approver || '';
+      document.getElementById('es-pos-approver').value   = meta.approverPos || '';
+
+      // เติม datalist ชื่อวัสดุสำหรับการพิมพ์เดาคำตอนเพิ่ม/แก้ไขรายการ
+      const dl = document.getElementById('item-names-list');
+      dl.innerHTML = getAllItemNames().map(n => `<option value="${esc(n)}"></option>`).join('');
+
+      renderEditSlipItems();
+      document.getElementById('edit-slip-overlay').classList.remove('hidden');
+    }
+
+    function closeEditSlipModal() {
+      document.getElementById('edit-slip-overlay').classList.add('hidden');
+      editSlipSid = null;
+      editSlipOriginalRows = [];
+      editSlipItems = [];
+    }
+
+    function renderEditSlipItems() {
+      const list  = document.getElementById('es-items-list');
+      const empty = document.getElementById('es-items-empty');
+      if (!editSlipItems.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+      list.innerHTML = editSlipItems.map((it, i) => `
+        <div class="flex gap-2 items-center bg-white border border-slate-200 rounded-lg p-2">
+          <input type="text" list="item-names-list" value="${esc(it.item_name)}"
+            placeholder="ชื่อวัสดุ"
+            oninput="updateEditSlipItem(${i}, 'item_name', this.value)"
+            class="flex-1 min-w-[120px] border border-slate-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+          <input type="number" min="0" value="${it.quantity}"
+            oninput="updateEditSlipItem(${i}, 'quantity', this.value)"
+            class="w-20 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-amber-500">
+          <input type="text" value="${esc(it.unit)}" placeholder="หน่วย"
+            oninput="updateEditSlipItem(${i}, 'unit', this.value)"
+            class="w-20 border border-slate-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+          <button onclick="removeEditSlipItem(${i})"
+            class="p-1.5 rounded-lg hover:bg-rose-50 text-rose-400 hover:text-rose-600 transition-colors flex-shrink-0">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>`).join('');
+      lucide.createIcons();
+    }
+
+    function updateEditSlipItem(i, key, value) {
+      if (!editSlipItems[i]) return;
+      editSlipItems[i][key] = (key === 'quantity') ? Number(value) || 0 : value;
+    }
+
+    function addEditSlipItem() {
+      editSlipItems.push({ id: null, item_name: '', quantity: 1, unit: '' });
+      renderEditSlipItems();
+    }
+
+    function removeEditSlipItem(i) {
+      editSlipItems.splice(i, 1);
+      renderEditSlipItems();
+    }
+
+    async function handleSaveEditSlip() {
+      const slipNumber = document.getElementById('es-slip-number').value.trim();
+      if (!slipNumber) { showToast('กรุณากรอกเลขที่ใบเบิก', 'bg-amber-500'); return; }
+      const nameReq = document.getElementById('es-name-requester').value.trim();
+      if (!nameReq) { showToast('กรุณากรอกชื่อผู้เบิก', 'bg-amber-500'); return; }
+
+      const validItems = editSlipItems.filter(it => it.item_name.trim() && it.quantity > 0);
+      if (!validItems.length) { showToast('กรุณาเพิ่มรายการวัสดุอย่างน้อย 1 รายการ', 'bg-amber-500'); return; }
+
+      const meta = {
+        slipNumber: slipNumber,
+        requester: nameReq,
+        requesterPos: document.getElementById('es-pos-requester').value.trim(),
+        requesterDept: document.getElementById('es-dept-requester').value.trim(),
+        issuer: document.getElementById('es-name-issuer').value.trim(),
+        issuerPos: document.getElementById('es-pos-issuer').value.trim(),
+        approver: document.getElementById('es-name-approver').value.trim(),
+        approverPos: document.getElementById('es-pos-approver').value.trim(),
+      };
+      const noteJson   = JSON.stringify(meta);
+      const department = editSlipOriginalRows[0].department || '';
+      const createdAt  = editSlipOriginalRows[0].created_at || new Date().toISOString();
+
+      const btn = document.getElementById('btn-save-edit-slip');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+      try {
+        const keptIds = new Set(validItems.filter(it => it.id).map(it => it.id));
+
+        // ลบแถวเดิมที่ถูกเอาออกจากรายการ
+        for (const orig of editSlipOriginalRows) {
+          if (!keptIds.has(orig.id)) {
+            await api('delete', { id: orig.id });
+          }
+        }
+
+        // อัปเดตแถวเดิมที่ยังอยู่ + สร้างแถวใหม่ที่เพิ่มเข้ามา
+        for (const it of validItems) {
+          const data = {
+            item_name: it.item_name.trim(),
+            quantity: it.quantity,
+            unit: it.unit.trim(),
+            note: noteJson,
+            slip_id: slipNumber,
+            department: department
+          };
+          if (it.id) {
+            await api('update', { id: it.id, data });
+          } else {
+            await api('create', {
+              data: { type: 'out', ...data, created_at: createdAt }
+            });
+          }
+        }
+
+        showToast('บันทึกการแก้ไขใบเบิกแล้ว', 'bg-emerald-600');
+        closeEditSlipModal();
+        await loadData();
+      } catch (e) {
+        showToast('เกิดข้อผิดพลาดระหว่างบันทึก', 'bg-rose-500');
+      }
+      btn.disabled = false; btn.textContent = 'บันทึกการแก้ไข';
+    }
+
     function loadScript(src) {
       return new Promise((resolve, reject) => {
         if (document.querySelector(`script[src="${src}"]`)) return resolve();
@@ -1799,7 +2155,7 @@ thead th {
     // ========================
     function switchTab(tab) {
       currentTab = tab;
-      ['stock', 'add', 'withdraw', 'history', 'dashboard', 'users'].forEach(t => {
+      ['stock', 'add', 'withdraw', 'history', 'dashboard', 'users', 'personnel'].forEach(t => {
         document.getElementById('panel-' + t).classList.toggle('hidden', t !== tab);
         const btn = document.getElementById('tab-' + t);
         if (btn) {
@@ -1815,6 +2171,7 @@ thead th {
       if (tab === 'withdraw') { populateWithdrawSelect(); renderCart(); }
       if (tab === 'history') renderHistory();
       if (tab === 'users' && currentUser && currentUser.role === 'admin') loadUsers();
+      if (tab === 'personnel' && currentUser && currentUser.role === 'admin') loadPersonnelMgmt();
       if (tab === 'dashboard') renderDashboard();
     }
 
@@ -2090,7 +2447,7 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s || 
       // Auto-fill ชื่อ/ตำแหน่ง/ฝ่าย ในใบเบิก
       // if (currentUser.fullname)   document.getElementById('wd-name-requester').value  = currentUser.fullname;
       // if (currentUser.position)   document.getElementById('wd-pos-requester').value   = currentUser.position;
-      // if (currentUser.department) document.getElementById('wd-dept-requester').value  = currentUser.department;
+      if (currentUser.department) document.getElementById('wd-dept-requester').value  = currentUser.department;
     }
 
     function openUserMenu() {
@@ -2256,6 +2613,114 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s || 
         const r = await api('deleteUser', { id });
         if (r.isOk) { showToast('ลบผู้ใช้แล้ว', 'bg-slate-700'); await loadUsers(); }
         else showToast(r.error || 'เกิดข้อผิดพลาด', 'bg-rose-500');
+      });
+    }
+
+    // ========================
+    // PERSONNEL MANAGEMENT (รายชื่อ-ตำแหน่ง) — เฉพาะแอดมิน
+    // ========================
+    let personnelMgmtList   = []; // รายการเต็มสำหรับหน้าจัดการ (มี __rowIndex)
+    let personnelModalMode  = 'add'; // 'add' | 'edit'
+    let personnelEditRow    = null;
+
+    async function loadPersonnelMgmt() {
+      const r = await api('getPersonnel');
+      if (r.isOk) {
+        personnelMgmtList = r.personnel;
+        renderPersonnelList();
+      } else {
+        showToast(r.error || 'โหลดรายชื่อล้มเหลว', 'bg-rose-500');
+      }
+    }
+
+    function renderPersonnelList() {
+      const list  = document.getElementById('personnel-mgmt-list');
+      const empty = document.getElementById('personnel-mgmt-empty');
+      const q = (document.getElementById('search-personnel').value || '').toLowerCase().trim();
+      const filtered = q
+        ? personnelMgmtList.filter(p => p.name.toLowerCase().includes(q) || p.position.toLowerCase().includes(q))
+        : personnelMgmtList;
+
+      if (!filtered.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+      list.innerHTML = filtered.map(p => {
+        const initial = (p.name || '?').charAt(0).toUpperCase();
+        return `<div class="card-appear bg-white rounded-xl border border-slate-100 shadow-sm p-3 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-indigo-400 flex-shrink-0 flex items-center justify-center text-white font-bold text-sm">${esc(initial)}</div>
+          <div class="flex-1 min-w-0">
+            <p class="font-medium text-slate-800 text-sm truncate">${esc(p.name)}</p>
+            <p class="text-xs text-slate-400 truncate">${esc(p.position || '-')}</p>
+          </div>
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <button onclick="openEditPersonnelModal(${p.__rowIndex})"
+              class="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-500 hover:text-amber-700 transition-colors" title="แก้ไข">
+              <i data-lucide="pencil" class="w-4 h-4"></i>
+            </button>
+            <button onclick="askDeletePersonnel(${p.__rowIndex}, '${esc(p.name).replace(/'/g,"\\'")}')"
+              class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-400 hover:text-rose-600 transition-colors" title="ลบ">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>`;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function openAddPersonnelModal() {
+      personnelModalMode = 'add'; personnelEditRow = null;
+      document.getElementById('personnel-modal-title').textContent = 'เพิ่มรายชื่อใหม่';
+      document.getElementById('pm-name').value = '';
+      document.getElementById('pm-position').value = '';
+      document.getElementById('personnel-modal-overlay').classList.remove('hidden');
+    }
+
+    function openEditPersonnelModal(rowIndex) {
+      const p = personnelMgmtList.find(x => x.__rowIndex === rowIndex);
+      if (!p) return;
+      personnelModalMode = 'edit'; personnelEditRow = rowIndex;
+      document.getElementById('personnel-modal-title').textContent = 'แก้ไขรายชื่อ';
+      document.getElementById('pm-name').value = p.name;
+      document.getElementById('pm-position').value = p.position;
+      document.getElementById('personnel-modal-overlay').classList.remove('hidden');
+    }
+
+    function closePersonnelModal() {
+      document.getElementById('personnel-modal-overlay').classList.add('hidden');
+    }
+
+    async function handleSavePersonnel() {
+      const name = document.getElementById('pm-name').value.trim();
+      if (!name) { showToast('กรุณากรอกชื่อ-สกุล', 'bg-amber-500'); return; }
+      const data = { name, position: document.getElementById('pm-position').value.trim() };
+      const btn = document.getElementById('btn-save-personnel');
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+      let r;
+      if (personnelModalMode === 'add') {
+        r = await api('createPersonnel', { data });
+      } else {
+        r = await api('updatePersonnel', { rowIndex: personnelEditRow, data });
+      }
+      btn.disabled = false; btn.textContent = 'บันทึก';
+      if (r.isOk) {
+        closePersonnelModal();
+        showToast(personnelModalMode === 'add' ? 'เพิ่มรายชื่อแล้ว' : 'อัปเดตรายชื่อแล้ว', 'bg-emerald-600');
+        await loadPersonnelMgmt();
+        await loadPersonnel(); // อัปเดต datalist ที่ใช้ในหน้าใบเบิกด้วย
+      } else {
+        showToast(r.error || 'เกิดข้อผิดพลาด', 'bg-rose-500');
+      }
+    }
+
+    function askDeletePersonnel(rowIndex, name) {
+      openConfirm('ลบรายชื่อนี้?', name, async () => {
+        const r = await api('deletePersonnel', { rowIndex });
+        if (r.isOk) {
+          showToast('ลบรายชื่อแล้ว', 'bg-slate-700');
+          await loadPersonnelMgmt();
+          await loadPersonnel();
+        } else {
+          showToast(r.error || 'เกิดข้อผิดพลาด', 'bg-rose-500');
+        }
       });
     }
 
@@ -2473,6 +2938,9 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s || 
     // Init — restore session หรือแสดง login
     // ========================
     lucide.createIcons();
+    wirePersonnelAutofill('wd-name-requester', 'wd-pos-requester');
+    wirePersonnelAutofill('wd-name-issuer', 'wd-pos-issuer');
+    wirePersonnelAutofill('wd-name-approver', 'wd-pos-approver');
 
     (async function initApp() {
       const savedUser = loadSession();
