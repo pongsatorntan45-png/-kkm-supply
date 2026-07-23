@@ -339,10 +339,11 @@
       <!-- =================== STOCK =================== -->
       <section id="panel-stock">
         <div class="mb-3">
-          <input type="search" id="search-stock" name="stock-query" placeholder="🔍 ค้นหาวัสดุ..."
+          <input type="search" id="search-stock" name="stock-query-x" placeholder="🔍 ค้นหาวัสดุ..."
             class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true"
-            data-form-type="other" oninput="renderStock()">
+            data-1p-ignore="true" data-bwignore="true" data-form-type="other" role="searchbox"
+            oninput="renderStock()">
         </div>
         <div id="stock-list" class="space-y-2"></div>
         <p id="stock-empty" class="text-center text-slate-400 py-10 text-sm hidden">ยังไม่มีวัสดุในสต็อก</p>
@@ -663,8 +664,10 @@
           </button>
         </div>
         <div class="mb-3">
-          <input type="text" id="search-personnel" placeholder="🔍 ค้นหาชื่อหรือตำแหน่ง..."
+          <input type="search" id="search-personnel" name="personnel-query-x" placeholder="🔍 ค้นหาชื่อหรือตำแหน่ง..."
             class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true"
+            data-1p-ignore="true" data-bwignore="true" data-form-type="other" role="searchbox"
             oninput="renderPersonnelList()">
         </div>
         <div id="personnel-mgmt-list" class="space-y-2"></div>
@@ -1123,14 +1126,16 @@
             <div>
               <label class="block text-sm text-slate-600 mb-1">ชื่อผู้ใช้ (username) <span
                   class="text-rose-500">*</span></label>
-              <input id="um-username" type="text"
+              <input id="um-username" type="text" name="um-username-x" autocomplete="off"
+                data-lpignore="true" data-1p-ignore="true"
                 class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="เช่น somjai.j">
             </div>
           </div>
           <div id="user-modal-password-row">
             <label class="block text-sm text-slate-600 mb-1">รหัสผ่าน <span class="text-rose-500">*</span></label>
-            <input id="um-password" type="password"
+            <input id="um-password" type="password" name="um-password-x" autocomplete="new-password"
+              data-lpignore="true" data-1p-ignore="true"
               class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="รหัสผ่าน">
           </div>
@@ -1236,20 +1241,23 @@
         <div class="space-y-3">
           <div>
             <label class="block text-sm text-slate-600 mb-1">รหัสผ่านเดิม <span class="text-rose-500">*</span></label>
-            <input id="cpw-old" type="password"
+            <input id="cpw-old" type="password" name="cpw-old-x" autocomplete="current-password"
+              data-lpignore="true" data-1p-ignore="true"
               class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
               placeholder="รหัสผ่านปัจจุบัน">
           </div>
           <div>
             <label class="block text-sm text-slate-600 mb-1">รหัสผ่านใหม่ <span class="text-rose-500">*</span></label>
-            <input id="cpw-new" type="password"
+            <input id="cpw-new" type="password" name="cpw-new-x" autocomplete="new-password"
+              data-lpignore="true" data-1p-ignore="true"
               class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
               placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)">
           </div>
           <div>
             <label class="block text-sm text-slate-600 mb-1">ยืนยันรหัสผ่านใหม่ <span
                 class="text-rose-500">*</span></label>
-            <input id="cpw-confirm" type="password"
+            <input id="cpw-confirm" type="password" name="cpw-confirm-x" autocomplete="new-password"
+              data-lpignore="true" data-1p-ignore="true"
               class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
               placeholder="ยืนยันรหัสผ่านใหม่">
           </div>
