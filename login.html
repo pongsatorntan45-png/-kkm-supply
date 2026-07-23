@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en" class="h-full">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เข้าสู่ระบบ - ระบบเบิกวัสดุสำนักงาน</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Sarabun', sans-serif;
+    }
+
+    .font-heading {
+      font-family: 'Kanit', sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body class="h-full bg-orange-50">
+
+  <script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxrjHVgsPCeuDKIaNg-KsDZj6xxzZWIXRNCM_SjJ_4C-CeWf3uPNNOWYkFYjMyCyiE/exec'; // <-- วาง URL ที่นี่
+  </script>
+
+  <div class="h-full w-full flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+      <!-- Top bar -->
+      <div class="bg-orange-400 px-6 py-5 text-white">
+        <div class="flex items-center justify-center gap-3">
+          <div
+            class="w-12 h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-md overflow-hidden">
+
+            <img src="" alt="">
+
+          </div>
+          <div class="text-left">
+            <h1 class="font-heading text-xl font-bold leading-tight">ระบบเบิกวัสดุสำนักงาน</h1>
+            <p class="text-orange-100 text-sm mt-0.5">สำนักคลัง เทศบาลนครขอนแก่น</p>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 py-6 space-y-4">
+        <div>
+          <label class="block text-sm text-slate-600 mb-1 font-medium">ชื่อผู้ใช้</label>
+          <div class="relative">
+            <i data-lucide="user" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+            <input id="login-username" type="text" placeholder="ชื่อผู้ใช้"
+              class="w-full border border-slate-200 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1 font-medium">รหัสผ่าน</label>
+          <div class="relative">
+            <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+            <input id="login-password" type="password" placeholder="รหัสผ่าน"
+              class="w-full border border-slate-200 rounded-lg pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              onkeydown="if(event.key==='Enter')handleLogin()">
+          </div>
+        </div>
+        <p id="login-error" class="text-rose-500 text-sm hidden text-center"></p>
+        <button onclick="handleLogin()" id="btn-login"
+          class="w-full bg-orange-400 hover:bg-orange-500 text-white rounded-lg py-2.5 text-sm font-semibold transition-colors">
+          เข้าสู่ระบบ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========================
+    // Storage helpers (ต้องใช้ key เดียวกับ index.html)
+    // ========================
+    function saveSession(user) {
+      try {
+        localStorage.setItem('kkm_user', JSON.stringify(user));
+      } catch (e) { }
+    }
+    function loadSession() {
+      try {
+        const raw = localStorage.getItem('kkm_user');
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) { return null; }
+    }
+
+    // ========================
+    // API
+    // ========================
+    async function api(action, extra = {}) {
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action, ...extra }),
+        headers: { 'Content-Type': 'text/plain' }
+      });
+      return res.json();
+    }
+
+    // ========================
+    // Login
+    // ========================
+    async function handleLogin() {
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errEl = document.getElementById('login-error');
+      const btn = document.getElementById('btn-login');
+      errEl.classList.add('hidden');
+
+      if (!username || !password) { errEl.textContent = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน'; errEl.classList.remove('hidden'); return; }
+
+      btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ...';
+      const r = await api('login', { username, password });
+      btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
+
+      if (r.isOk) {
+        saveSession(r.user);
+        window.location.href = 'index.html';
+      } else {
+        errEl.textContent = r.error || 'เข้าสู่ระบบไม่สำเร็จ';
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    // ========================
+    // Init — ถ้ามี session อยู่แล้ว ให้ไปหน้าแอปเลย
+    // ========================
+    lucide.createIcons();
+    (function initLogin() {
+      const savedUser = loadSession();
+      if (savedUser) {
+        window.location.href = 'index.html';
+      }
+    })();
+  </script>
+</body>
+
+</html>
