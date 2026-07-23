@@ -343,7 +343,7 @@
             class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true"
             data-1p-ignore="true" data-bwignore="true" data-form-type="other" role="searchbox"
-            oninput="renderStock()">
+            readonly onfocus="this.removeAttribute('readonly')" oninput="renderStock()">
         </div>
         <div id="stock-list" class="space-y-2"></div>
         <p id="stock-empty" class="text-center text-slate-400 py-10 text-sm hidden">ยังไม่มีวัสดุในสต็อก</p>
@@ -529,9 +529,14 @@
             <p class="text-xs text-slate-500 font-medium mb-2">เพิ่มรายการเบิก</p>
             <div class="flex gap-2 flex-wrap">
               <div class="flex-1 min-w-[140px] relative" id="wd-name-wrapper">
-                <input id="wd-name-input" type="text" autocomplete="off" placeholder="🔍 พิมพ์ค้นหาวัสดุ..."
+                <input id="wd-name-input" type="text" name="wd-name-input-x" placeholder="🔍 พิมพ์ค้นหาวัสดุ..."
+                  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true"
+                  data-1p-ignore="true" data-bwignore="true" data-form-type="other" role="searchbox"
                   class="w-full border border-slate-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
-                  oninput="filterWdDropdown()" onfocus="openWdDropdown()" onblur="setTimeout(closeWdDropdown, 150)">
+                  readonly
+                  oninput="filterWdDropdown()"
+                  onfocus="this.removeAttribute('readonly'); openWdDropdown()"
+                  onblur="setTimeout(closeWdDropdown, 150)">
                 <div id="wd-name-dropdown"
                   class="hidden absolute z-30 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
                 </div>
@@ -668,7 +673,7 @@
             class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true"
             data-1p-ignore="true" data-bwignore="true" data-form-type="other" role="searchbox"
-            oninput="renderPersonnelList()">
+            readonly onfocus="this.removeAttribute('readonly')" oninput="renderPersonnelList()">
         </div>
         <div id="personnel-mgmt-list" class="space-y-2"></div>
         <p id="personnel-mgmt-empty" class="text-center text-slate-400 py-10 text-sm hidden">ยังไม่มีรายชื่อ</p>
