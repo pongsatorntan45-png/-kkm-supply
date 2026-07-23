@@ -589,6 +589,15 @@
             <i data-lucide="refresh-cw" class="inline w-3 h-3 mr-1"></i>รีเฟรช
           </button>
         </div>
+        <div class="flex items-center gap-2 mb-3 flex-wrap">
+          <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
+          <select id="hist-month-filter" onchange="onHistoryMonthYearChange()"
+            class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white">
+          </select>
+          <select id="hist-year-filter" onchange="onHistoryMonthYearChange()"
+            class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white">
+          </select>
+        </div>
         <div id="history-list" class="space-y-3"></div>
         <p id="history-empty" class="text-center text-slate-400 py-10 text-sm hidden">ยังไม่มีประวัติ</p>
       </section>
@@ -596,9 +605,20 @@
       <!-- =================== DASHBOARD (Admin) =================== -->
       <section id="panel-dashboard" class="hidden">
         <!-- Dept filter bar (admin only) -->
-        <div class="flex items-center gap-2 mb-4 flex-wrap">
+        <div class="flex items-center gap-2 mb-3 flex-wrap">
           <span class="text-sm font-medium text-slate-600">แสดงข้อมูล:</span>
           <div id="dash-dept-tabs" class="flex gap-1.5 flex-wrap"></div>
+        </div>
+
+        <!-- Month/Year filter -->
+        <div class="flex items-center gap-2 mb-4 flex-wrap">
+          <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
+          <select id="dash-month-filter" onchange="onDashMonthYearChange()"
+            class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white">
+          </select>
+          <select id="dash-year-filter" onchange="onDashMonthYearChange()"
+            class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white">
+          </select>
         </div>
 
         <!-- Summary KPI row -->
@@ -1328,10 +1348,77 @@
     let personnelList = []; // [{name, position}] จากชีท "รายชื่อ" สำหรับช่วยพิมพ์เดาคำ+ใส่ตำแหน่ง auto
     let currentTab = 'stock';
     let historyFilter = 'slip';
+    let historyMonthFilter = 'all'; // 'all' หรือ 0-11
+    let historyYearFilter = 'all';  // 'all' หรือ ค.ศ. เช่น 2026
     let cart = [];            // [{item_name, quantity, unit, maxQty}]
     let pendingConfirmFn = null;
     let currentSlipData = null;     // slip being viewed
     let sessionToken = null;
+
+    const THAI_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+
+    // คืนรายการปี ค.ศ. ที่มีข้อมูลจริงในระบบ (เรียงใหม่ไปเก่า) + ปีปัจจุบันเสมอ
+    function getAvailableYears() {
+      const s = new Set();
+      allRecords.forEach(r => {
+        if (!r.created_at) return;
+        const d = new Date(r.created_at);
+        if (!isNaN(d)) s.add(d.getFullYear());
+      });
+      s.add(new Date().getFullYear());
+      return [...s].sort((a, b) => b - a);
+    }
+
+    // กรอง records ตามเดือน/ปีที่เลือก (เดือน: 0-11, ปี: ค.ศ.) — 'all' = ไม่กรอง
+    function filterByMonthYear(records, monthFilter, yearFilter) {
+      if (monthFilter === 'all' && yearFilter === 'all') return records;
+      return records.filter(r => {
+        if (!r.created_at) return false;
+        const d = new Date(r.created_at);
+        if (isNaN(d)) return false;
+        if (yearFilter !== 'all' && d.getFullYear() !== Number(yearFilter)) return false;
+        if (monthFilter !== 'all' && d.getMonth() !== Number(monthFilter)) return false;
+        return true;
+      });
+    }
+
+    // เติมตัวเลือกปี (พ.ศ.) ในช่อง select ตามข้อมูลที่มีจริง แล้วคงค่าที่เลือกไว้เดิม
+    function populateMonthYearSelect(monthSelId, yearSelId, monthVal, yearVal) {
+      const monthSel = document.getElementById(monthSelId);
+      const yearSel = document.getElementById(yearSelId);
+      if (!monthSel || !yearSel) return;
+      if (!monthSel.dataset.filled) {
+        monthSel.innerHTML = '<option value="all">ทุกเดือน</option>' +
+          THAI_MONTHS.map((m, i) => `<option value="${i}">${m}</option>`).join('');
+        monthSel.dataset.filled = '1';
+      }
+      const years = getAvailableYears();
+      yearSel.innerHTML = '<option value="all">ทุกปี</option>' +
+        years.map(y => `<option value="${y}">${y + 543}</option>`).join('');
+      monthSel.value = monthVal;
+      yearSel.value = years.includes(Number(yearVal)) ? yearVal : 'all';
+    }
+
+    function populateHistoryFilters() {
+      populateMonthYearSelect('hist-month-filter', 'hist-year-filter', historyMonthFilter, historyYearFilter);
+    }
+
+    function populateDashFilters() {
+      populateMonthYearSelect('dash-month-filter', 'dash-year-filter', dashMonthFilter, dashYearFilter);
+    }
+
+    function onHistoryMonthYearChange() {
+      historyMonthFilter = document.getElementById('hist-month-filter').value;
+      historyYearFilter = document.getElementById('hist-year-filter').value;
+      renderHistory();
+    }
+
+    function onDashMonthYearChange() {
+      dashMonthFilter = document.getElementById('dash-month-filter').value;
+      dashYearFilter = document.getElementById('dash-year-filter').value;
+      renderDashboard();
+    }
 
     // ========================
     // Storage helpers
@@ -1375,6 +1462,8 @@
           allRecords = r.records;
           updateStats();
           renderStock();
+          populateHistoryFilters();
+          populateDashFilters();
           renderHistory();
           populateWithdrawSelect();
           setSyncStatus('ok');
@@ -1506,10 +1595,11 @@
     function renderHistory() {
       const list = document.getElementById('history-list');
       const empty = document.getElementById('history-empty');
+      const records = filterByMonthYear(allRecords, historyMonthFilter, historyYearFilter);
 
       if (historyFilter === 'in') {
         // รับเข้า — รายการเดี่ยว
-        const ins = allRecords.filter(r => r.type === 'in')
+        const ins = records.filter(r => r.type === 'in')
           .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
         if (!ins.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
         empty.classList.add('hidden');
@@ -1523,7 +1613,7 @@
         const slipMap = {};
         const standalone = [];
 
-        allRecords.forEach(r => {
+        records.forEach(r => {
           if (r.type === 'out' && r.slip_id) {
             const sid = String(r.slip_id);
             if (!slipMap[sid]) slipMap[sid] = [];
@@ -2959,6 +3049,8 @@ thead th {
     ];
 
     let dashDeptFilter = '__all__'; // '__all__' หรือชื่อฝ่าย
+    let dashMonthFilter = 'all';    // 'all' หรือ 0-11
+    let dashYearFilter = 'all';     // 'all' หรือ ค.ศ.
 
     function getDepts() {
       const s = new Set();
@@ -2971,11 +3063,14 @@ thead th {
       return light ? DEPT_LIGHT[i] : DEPT_COLORS[i];
     }
 
-    function computeDashData(deptFilter) {
+    function computeDashData(deptFilter, monthFilter, yearFilter) {
       // กรอง records ตาม dept
-      const recs = deptFilter === '__all__'
+      let recs = deptFilter === '__all__'
         ? allRecords
         : allRecords.filter(r => r.department === deptFilter);
+
+      // กรองตามเดือน/ปีที่เลือก
+      recs = filterByMonthYear(recs, monthFilter, yearFilter);
 
       // คำนวณยอดรับเข้า/เบิกออก แต่ละชนิด
       // "in"  นับทั้งหมด (รับเข้าจริง + ปรับสต็อกขึ้น + ตั้งค่าใหม่แล้วเพิ่ม)
@@ -3040,7 +3135,7 @@ thead th {
         }
       }
 
-      const { itemMap, deptMap, slipCount, recCount } = computeDashData(dashDeptFilter);
+      const { itemMap, deptMap, slipCount, recCount } = computeDashData(dashDeptFilter, dashMonthFilter, dashYearFilter);
 
       // --- KPI cards ---
       const totalOut = Object.values(itemMap).reduce((s, v) => s + v.out, 0);
