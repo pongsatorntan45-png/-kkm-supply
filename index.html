@@ -597,6 +597,10 @@
           <select id="hist-year-filter" onchange="onHistoryMonthYearChange()"
             class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white">
           </select>
+          <i data-lucide="user" class="w-4 h-4 text-slate-400 ml-1"></i>
+          <select id="hist-person-filter" onchange="onHistoryPersonChange()"
+            class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white max-w-[160px]">
+          </select>
         </div>
         <div id="history-list" class="space-y-3"></div>
         <p id="history-empty" class="text-center text-slate-400 py-10 text-sm hidden">ยังไม่มีประวัติ</p>
@@ -610,7 +614,7 @@
           <div id="dash-dept-tabs" class="flex gap-1.5 flex-wrap"></div>
         </div>
 
-        <!-- Month/Year filter -->
+        <!-- Month/Year/Person filter -->
         <div class="flex items-center gap-2 mb-4 flex-wrap">
           <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
           <select id="dash-month-filter" onchange="onDashMonthYearChange()"
@@ -618,6 +622,10 @@
           </select>
           <select id="dash-year-filter" onchange="onDashMonthYearChange()"
             class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white">
+          </select>
+          <i data-lucide="user" class="w-4 h-4 text-slate-400 ml-1"></i>
+          <select id="dash-person-filter" onchange="onDashPersonChange()"
+            class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white max-w-[160px]">
           </select>
         </div>
 
@@ -1350,6 +1358,7 @@
     let historyFilter = 'slip';
     let historyMonthFilter = 'all'; // 'all' หรือ 0-11
     let historyYearFilter = 'all';  // 'all' หรือ ค.ศ. เช่น 2026
+    let historyPersonFilter = '__all__'; // '__all__' หรือชื่อผู้เบิก
     let cart = [];            // [{item_name, quantity, unit, maxQty}]
     let pendingConfirmFn = null;
     let currentSlipData = null;     // slip being viewed
@@ -1402,10 +1411,12 @@
 
     function populateHistoryFilters() {
       populateMonthYearSelect('hist-month-filter', 'hist-year-filter', historyMonthFilter, historyYearFilter);
+      populatePersonSelect('hist-person-filter', historyPersonFilter);
     }
 
     function populateDashFilters() {
       populateMonthYearSelect('dash-month-filter', 'dash-year-filter', dashMonthFilter, dashYearFilter);
+      populatePersonSelect('dash-person-filter', dashPersonFilter);
     }
 
     function onHistoryMonthYearChange() {
@@ -1417,6 +1428,50 @@
     function onDashMonthYearChange() {
       dashMonthFilter = document.getElementById('dash-month-filter').value;
       dashYearFilter = document.getElementById('dash-year-filter').value;
+      renderDashboard();
+    }
+
+    // ========================
+    // ตัวกรองรายบุคคล (ผู้เบิก)
+    // ========================
+    // ดึงชื่อผู้เบิกจากรายการ "เบิกออก" (ถอด JSON ในช่อง note)
+    function getRequesterName(r) {
+      if (!r || r.type !== 'out' || !r.note) return '';
+      try {
+        const m = JSON.parse(r.note);
+        return (m && m.requester) ? m.requester : '';
+      } catch (e) { return ''; }
+    }
+
+    // รายชื่อผู้เบิกทั้งหมดที่มีอยู่จริงในข้อมูล
+    function getRequesters() {
+      const s = new Set();
+      allRecords.forEach(r => { const name = getRequesterName(r); if (name) s.add(name); });
+      return [...s].sort((a, b) => a.localeCompare(b, 'th'));
+    }
+
+    function populatePersonSelect(selId, currentVal) {
+      const sel = document.getElementById(selId);
+      if (!sel) return;
+      const people = getRequesters();
+      sel.innerHTML = '<option value="__all__">ทุกคน</option>' +
+        people.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
+      sel.value = people.includes(currentVal) ? currentVal : '__all__';
+    }
+
+    // กรอง records ตามผู้เบิกที่เลือก — รายการ "รับเข้า" จะไม่แสดง เพราะไม่มีผู้เบิกผูกอยู่
+    function filterByPerson(records, personFilter) {
+      if (personFilter === '__all__') return records;
+      return records.filter(r => r.type === 'out' && getRequesterName(r) === personFilter);
+    }
+
+    function onHistoryPersonChange() {
+      historyPersonFilter = document.getElementById('hist-person-filter').value;
+      renderHistory();
+    }
+
+    function onDashPersonChange() {
+      dashPersonFilter = document.getElementById('dash-person-filter').value;
       renderDashboard();
     }
 
@@ -1595,7 +1650,7 @@
     function renderHistory() {
       const list = document.getElementById('history-list');
       const empty = document.getElementById('history-empty');
-      const records = filterByMonthYear(allRecords, historyMonthFilter, historyYearFilter);
+      const records = filterByPerson(filterByMonthYear(allRecords, historyMonthFilter, historyYearFilter), historyPersonFilter);
 
       if (historyFilter === 'in') {
         // รับเข้า — รายการเดี่ยว
@@ -3051,6 +3106,7 @@ thead th {
     let dashDeptFilter = '__all__'; // '__all__' หรือชื่อฝ่าย
     let dashMonthFilter = 'all';    // 'all' หรือ 0-11
     let dashYearFilter = 'all';     // 'all' หรือ ค.ศ.
+    let dashPersonFilter = '__all__'; // '__all__' หรือชื่อผู้เบิก
 
     function getDepts() {
       const s = new Set();
@@ -3063,7 +3119,7 @@ thead th {
       return light ? DEPT_LIGHT[i] : DEPT_COLORS[i];
     }
 
-    function computeDashData(deptFilter, monthFilter, yearFilter) {
+    function computeDashData(deptFilter, monthFilter, yearFilter, personFilter) {
       // กรอง records ตาม dept
       let recs = deptFilter === '__all__'
         ? allRecords
@@ -3071,6 +3127,9 @@ thead th {
 
       // กรองตามเดือน/ปีที่เลือก
       recs = filterByMonthYear(recs, monthFilter, yearFilter);
+
+      // กรองตามผู้เบิกที่เลือก
+      recs = filterByPerson(recs, personFilter);
 
       // คำนวณยอดรับเข้า/เบิกออก แต่ละชนิด
       // "in"  นับทั้งหมด (รับเข้าจริง + ปรับสต็อกขึ้น + ตั้งค่าใหม่แล้วเพิ่ม)
@@ -3135,7 +3194,7 @@ thead th {
         }
       }
 
-      const { itemMap, deptMap, slipCount, recCount } = computeDashData(dashDeptFilter, dashMonthFilter, dashYearFilter);
+      const { itemMap, deptMap, slipCount, recCount } = computeDashData(dashDeptFilter, dashMonthFilter, dashYearFilter, dashPersonFilter);
 
       // --- KPI cards ---
       const totalOut = Object.values(itemMap).reduce((s, v) => s + v.out, 0);
