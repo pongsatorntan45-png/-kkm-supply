@@ -734,39 +734,6 @@
       </div>
     </div>
 
-    <!-- Slip View Overlay -->
-    <div id="slip-overlay"
-      class="fixed inset-0 bg-black/60 z-50 hidden overlay-bg flex items-center justify-center p-4">
-      <div class="bg-white rounded-xl w-full shadow-2xl flex flex-col" style="max-width:680px;max-height:92vh;">
-        <!-- Header -->
-        <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100 flex-shrink-0">
-          <h3 class="font-heading font-bold text-slate-800">ตัวอย่างใบเบิกวัสดุ</h3>
-          <div class="flex items-center gap-2">
-            <button onclick="printSlip()"
-              class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 flex items-center gap-1">
-              <i data-lucide="printer" class="w-3.5 h-3.5"></i>พิมพ์ / PDF
-            </button>
-            <button onclick="closeSlip()"
-              class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
-              <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-          </div>
-        </div>
-        <!-- Preview body — scaled A4 -->
-        <div class="overflow-y-auto flex-1 bg-slate-100 p-4">
-          <div id="slip-body" style="
-            background:#fff;
-            width:595px; min-height:842px;
-            margin:0 auto;
-            padding:38px 42px 38px 52px;
-            box-shadow:0 2px 12px rgba(0,0,0,.15);
-            font-family:'Sarabun',sans-serif;
-            font-size:13pt; line-height:1.35; color:#000;
-          "></div>
-        </div>
-      </div>
-    </div>
-
     <!-- =================== EDIT SLIP MODAL (admin only) =================== -->
     <div id="edit-slip-overlay"
       class="fixed inset-0 bg-black/40 z-50 hidden overlay-bg flex items-center justify-center p-4">
@@ -907,96 +874,6 @@
         </div>
       </div>
     </div>
-
-    <style>
-      /* Preview styles inside slip-body */
-      #slip-body .form-title {
-        font-size: 16pt;
-        font-weight: bold;
-        text-align: center;
-        line-height: 1.4;
-      }
-
-      #slip-body .form-header-row {
-        display: table;
-        width: 100%;
-      }
-
-      #slip-body .form-header-left {
-        display: table-cell;
-        vertical-align: top;
-        font-size: 12pt;
-        line-height: 1.35;
-      }
-
-      #slip-body .form-header-right {
-        display: table-cell;
-        text-align: right;
-        vertical-align: top;
-        font-size: 12pt;
-        line-height: 1.35;
-      }
-
-      #slip-body .form-date {
-        text-align: right;
-        font-size: 12pt;
-        line-height: 1.35;
-      }
-
-      #slip-body .form-section-sm {
-        font-size: 12pt;
-        line-height: 1.35;
-      }
-
-      #slip-body table {
-        border-collapse: collapse;
-        width: 100%;
-        margin-top: 8px;
-      }
-
-      #slip-body td,
-      #slip-body th {
-        border: 0.25px solid #000;
-        padding: 1px 4px 0 4px;
-        font-size: 12pt;
-        line-height: 1.2;
-        height: 18px;
-        vertical-align: top;
-      }
-
-      #slip-body thead th {
-        font-size: 12pt;
-        line-height: 1.2;
-        height: auto;
-        padding: 2px 4px;
-        text-align: center;
-      }
-
-      #slip-body .sig-wrap {
-        margin-top: 12px;
-      }
-
-      #slip-body .sig-grid {
-        display: table;
-        width: 100%;
-      }
-
-      #slip-body .sig-col {
-        display: table-cell;
-        width: 50%;
-        text-align: center;
-        line-height: 1.35;
-        vertical-align: top;
-        font-size: 12pt;
-      }
-
-      #slip-body .sig-approver {
-        text-align: center;
-        margin-top: 8px;
-        line-height: 1.35;
-        font-size: 12pt;
-      }
-    </style>
 
     <!-- Print area (hidden, used for print) -->
     <div id="print-area" class="hidden"></div>
@@ -2260,13 +2137,7 @@
       const rows = allRecords.filter(r => String(r.slip_id) === String(sid));
       if (!rows.length) return;
       currentSlipData = { sid, rows };
-      document.getElementById('slip-body').innerHTML = buildOfficialForm(sid, rows);
-      document.getElementById('slip-overlay').classList.remove('hidden');
-    }
-
-    function closeSlip() {
-      document.getElementById('slip-overlay').classList.add('hidden');
-      currentSlipData = null;
+      printSlip();
     }
 
     // ========================
