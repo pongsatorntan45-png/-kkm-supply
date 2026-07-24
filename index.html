@@ -8,6 +8,9 @@
 <link rel="stylesheet" href="">
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
 
   <style>
     * {
@@ -2463,32 +2466,21 @@
 
       iframe.contentDocument.write(`<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 <style>
 
 /*
-  Strategy: use Roboto (from Google Fonts) for digits/Latin only via unicode-range.
-  Roboto has NO Thai digit substitution. Sarabun handles Thai text.
-  unicode-range splits rendering at the font level — Chrome cannot override this.
+  Strategy: stack Roboto ก่อน Sarabun แล้วปล่อยให้เบราว์เซอร์ fallback เอง
+  Roboto ไม่มีตัวอักษรไทย (ไม่มี Thai glyphs) เบราว์เซอร์จะข้ามไปใช้ Sarabun ให้เองโดยอัตโนมัติ
+  สำหรับตัวเลข/อังกฤษจะได้ Roboto ส่วนภาษาไทยจะได้ Sarabun โดยไม่ต้องพึ่ง URL ไฟล์ฟอนต์ตายตัว
+  (เดิมใช้ @font-face ชี้ไป URL ไฟล์ .woff2 เฉพาะเวอร์ชัน ซึ่ง Google เปลี่ยนแปลง/เลิกใช้ URL เหล่านี้เป็นระยะ
+  ทำให้บางครั้งฟอนต์โหลดไม่ได้และ fallback ไปเป็นฟอนต์ระบบที่หน้าตาแปลกไป)
 */
-@font-face {
-  font-family: "DocFont";
-  src: url('https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Mu4mxK.woff2') format('woff2');
-  unicode-range: U+0030-0039, U+0020-U+002F, U+003A-U+0040, U+0041-U+007E, U+00A0;
-  /* digits 0-9, basic Latin, punctuation — NOT Thai range */
-}
-@font-face {
-  font-family: "DocFont";
-  src: url('https://fonts.gstatic.com/s/sarabun/v13/DtVmJx26TKEr37c9YBBx_nE.woff2') format('woff2');
-  unicode-range: U+0E00-U+0E7F, U+200C-U+200D, U+25CC;
-  /* Thai characters only */
-}
 
 html { -webkit-locale: "en"; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
   body { width: 794px; height: 1123px; overflow: hidden;
-    font-family: "DocFont", "Sarabun", sans-serif;
+    font-family: "Roboto", "Sarabun", sans-serif;
     font-size: 12pt; line-height: 1.3; color: #000; background: #fff;
     padding: 42px 48px 42px 60px; }
   .form-title { font-size: 13pt; font-weight: bold; text-align: center; line-height: 1.4; }
@@ -2532,8 +2524,14 @@ thead th {
 </style></head><body>${formHtml}</body></html>`);
       iframe.contentDocument.close();
 
-      // รอ render เสร็จ
-      await new Promise(r => setTimeout(r, 800));
+      // รอฟอนต์โหลดเสร็จจริง (ไม่ใช่แค่เดาเวลา) กันปัญหาฟอนต์หลุด/ยังไม่พร้อมตอนแคปภาพ
+      try {
+        await Promise.race([
+          iframe.contentDocument.fonts.ready,
+          new Promise(r => setTimeout(r, 2000)) // กันเน็ตช้าไม่ให้ค้างนาน
+        ]);
+      } catch (e) { /* เบราว์เซอร์เก่าบางตัวไม่รองรับ document.fonts — ข้ามไป */ }
+      await new Promise(r => setTimeout(r, 200)); // เผื่อ layout reflow หลังฟอนต์โหลด
 
       const canvas = await html2canvas(iframe.contentDocument.body, {
         scale: 3, useCORS: true, backgroundColor: '#ffffff',
