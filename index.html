@@ -2528,11 +2528,11 @@ thead th {
 
         tableRows += `<tr>
       <td style="width:10%">${r ? esc(r.dateStr) : '&nbsp;'}</td>
-      <td style="width:51%;text-align:left;padding-left:6px">${r ? esc(who !== '-' ? who : '') : '&nbsp;'}</td>
+      <td style="width:42%;text-align:left;padding-left:6px">${r ? esc(who !== '-' ? who : '') : '&nbsp;'}</td>
       <td style="width:10%">${r ? esc(r.docNo !== '-' ? r.docNo : '') : '&nbsp;'}</td>
-      <td style="width:7%">${qtyInCell}</td>
-      <td style="width:7%">${r && r.qtyOut !== null ? num(r.qtyOut) : '&nbsp;'}</td>
-      <td style="width:7%;font-weight:bold">${r ? num(r.balance) : '&nbsp;'}</td>
+      <td style="width:10%">${qtyInCell}</td>
+      <td style="width:10%">${r && r.qtyOut !== null ? num(r.qtyOut) : '&nbsp;'}</td>
+      <td style="width:10%;font-weight:bold">${r ? num(r.balance) : '&nbsp;'}</td>
       <td style="width:8%">${r && r.remark ? esc(r.remark) : '&nbsp;'}</td>
     </tr>`;
       }
@@ -2562,15 +2562,15 @@ thead th {
       <thead>
         <tr>
           <th rowspan="2" style="width:10%">วัน เดือน ปี</th>
-          <th rowspan="2" style="width:51%">รับจาก/จ่ายให้</th>
+          <th rowspan="2" style="width:42%">รับจาก/จ่ายให้</th>
           <th rowspan="2" style="width:10%">เลขที่เอกสาร</th>
-          <th colspan="3" style="width:21%">จำนวน</th>
+          <th colspan="3" style="width:30%">จำนวน</th>
           <th rowspan="2" style="width:8%">หมายเหตุ</th>
         </tr>
         <tr>
-          <th style="width:7%">รับ</th>
-          <th style="width:7%">จ่าย</th>
-          <th style="width:7%">คงเหลือ</th>
+          <th style="width:10%">รับ</th>
+          <th style="width:10%">จ่าย</th>
+          <th style="width:10%">คงเหลือ</th>
         </tr>
       </thead>
       <tbody>${tableRows}</tbody>
