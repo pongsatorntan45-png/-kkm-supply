@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบเบิกวัสดุสำนักงาน</title>
-<link rel="stylesheet" href="">
+  <link rel="stylesheet" href="">
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link
@@ -254,7 +254,7 @@
       <div class="max-w-4xl mx-auto flex items-center justify-between">
         <div class="flex items-center gap-3">
 
-<img src="" alt="">          
+          <img src="" alt="">
           <div>
             <h1 class="font-heading text-xl sm:text-2xl font-bold">ระบบเบิกวัสดุสำนักงาน สำนักคลัง</h1>
             <div id="dept-filter-banner" class="text-white">
@@ -337,12 +337,18 @@
 
       <!-- =================== STOCK =================== -->
       <section id="panel-stock">
-        <div class="mb-3">
+        <div class="flex items-center gap-2 mb-3">
           <input type="search" id="search-stock" name="stock-query-x" placeholder="🔍 ค้นหาวัสดุ..."
-            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            class="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true"
-            data-1p-ignore="true" data-bwignore="true" data-form-type="other" role="searchbox"
-            readonly onfocus="this.removeAttribute('readonly')" oninput="renderStock()">
+            data-1p-ignore="true" data-bwignore="true" data-form-type="other" role="searchbox" readonly
+            onfocus="this.removeAttribute('readonly')" oninput="renderStock()">
+          <button onclick="printAllItemLedgers()"
+            class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-600 hover:text-violet-800 text-sm font-medium transition-colors border border-violet-100"
+            title="พิมพ์บัญชีวัสดุทุกรายการรวมเป็นไฟล์เดียว">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">บัญชีวัสดุ (ทั้งหมด)</span>
+          </button>
         </div>
         <div id="stock-list" class="space-y-2"></div>
         <p id="stock-empty" class="text-center text-slate-400 py-10 text-sm hidden">ยังไม่มีวัสดุในสต็อก</p>
@@ -435,7 +441,7 @@
               </div>
               <div>
                 <label class="block text-xs text-slate-500 mb-0.5">ฝ่าย</label>
-                <select id="wd-dept-requester"
+                <select id="wd-dept-requester" onchange="onWdDeptChange()"
                   class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
                   <option value="">-- เลือกฝ่าย --</option>
                   <option value="บริหารงานทั่วไป">บริหารงานทั่วไป</option>
@@ -538,9 +544,7 @@
                   autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true"
                   data-1p-ignore="true" data-bwignore="true" data-form-type="other" role="searchbox"
                   class="w-full border border-slate-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
-                  readonly
-                  oninput="filterWdDropdown()"
-                  onfocus="this.removeAttribute('readonly'); openWdDropdown()"
+                  readonly oninput="filterWdDropdown()" onfocus="this.removeAttribute('readonly'); openWdDropdown()"
                   onblur="setTimeout(closeWdDropdown, 150)">
                 <div id="wd-name-dropdown"
                   class="hidden absolute z-30 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
@@ -705,8 +709,8 @@
           <input type="search" id="search-personnel" name="personnel-query-x" placeholder="🔍 ค้นหาชื่อหรือตำแหน่ง..."
             class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true"
-            data-1p-ignore="true" data-bwignore="true" data-form-type="other" role="searchbox"
-            readonly onfocus="this.removeAttribute('readonly')" oninput="renderPersonnelList()">
+            data-1p-ignore="true" data-bwignore="true" data-form-type="other" role="searchbox" readonly
+            onfocus="this.removeAttribute('readonly')" oninput="renderPersonnelList()">
         </div>
         <div id="personnel-mgmt-list" class="space-y-2"></div>
         <p id="personnel-mgmt-empty" class="text-center text-slate-400 py-10 text-sm hidden">ยังไม่มีรายชื่อ</p>
@@ -731,6 +735,22 @@
           <button onclick="doConfirm()" id="btn-confirm-ok"
             class="flex-1 py-2 rounded-lg bg-rose-500 text-white text-sm font-medium hover:bg-rose-600">ลบ</button>
         </div>
+      </div>
+    </div>
+
+    <!-- =================== BULK LEDGER PDF PROGRESS =================== -->
+    <div id="ledger-progress-overlay"
+      class="fixed inset-0 bg-black/40 z-[95] hidden overlay-bg flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl p-5 max-w-sm w-full shadow-xl">
+        <div class="flex items-center gap-2 mb-3">
+          <i data-lucide="loader-2" class="w-5 h-5 text-violet-500 animate-spin"></i>
+          <p class="font-heading font-semibold text-slate-800">กำลังสร้างบัญชีวัสดุ (ทั้งหมด)</p>
+        </div>
+        <p id="ledger-progress-item" class="text-sm text-slate-600 mb-1 truncate">กำลังเตรียมข้อมูล...</p>
+        <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden mb-1.5">
+          <div id="ledger-progress-bar" class="h-full bg-violet-500 transition-all duration-200" style="width:0%"></div>
+        </div>
+        <p id="ledger-progress-count" class="text-xs text-slate-400 text-right">0 / 0</p>
       </div>
     </div>
 
@@ -946,10 +966,18 @@
             </p>
             <p id="item-ledger-name" class="text-sm font-medium text-violet-700 truncate mt-0.5"></p>
           </div>
-          <button onclick="closeItemLedger()"
-            class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex-shrink-0">
-            <i data-lucide="x" class="w-4 h-4"></i>
-          </button>
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <button onclick="printItemLedger()" id="btn-print-item-ledger"
+              class="p-1.5 rounded-lg text-violet-500 hover:text-violet-700 hover:bg-violet-50 flex items-center gap-1"
+              title="พิมพ์ PDF">
+              <i data-lucide="printer" class="w-4 h-4"></i>
+              <span class="text-xs font-medium hidden sm:inline">พิมพ์ PDF</span>
+            </button>
+            <button onclick="closeItemLedger()"
+              class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
         </div>
         <div class="flex items-center gap-3 text-xs text-slate-500 mb-3 flex-shrink-0">
           <span>หน่วย: <span id="item-ledger-unit" class="font-medium text-slate-700"></span></span>
@@ -1100,8 +1128,8 @@
             <div>
               <label class="block text-sm text-slate-600 mb-1">ชื่อผู้ใช้ (username) <span
                   class="text-rose-500">*</span></label>
-              <input id="um-username" type="text" name="um-username-x" autocomplete="off"
-                data-lpignore="true" data-1p-ignore="true"
+              <input id="um-username" type="text" name="um-username-x" autocomplete="off" data-lpignore="true"
+                data-1p-ignore="true"
                 class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="เช่น somjai.j">
             </div>
@@ -1215,15 +1243,15 @@
         <div class="space-y-3">
           <div>
             <label class="block text-sm text-slate-600 mb-1">รหัสผ่านเดิม <span class="text-rose-500">*</span></label>
-            <input id="cpw-old" type="password" name="cpw-old-x" autocomplete="current-password"
-              data-lpignore="true" data-1p-ignore="true"
+            <input id="cpw-old" type="password" name="cpw-old-x" autocomplete="current-password" data-lpignore="true"
+              data-1p-ignore="true"
               class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
               placeholder="รหัสผ่านปัจจุบัน">
           </div>
           <div>
             <label class="block text-sm text-slate-600 mb-1">รหัสผ่านใหม่ <span class="text-rose-500">*</span></label>
-            <input id="cpw-new" type="password" name="cpw-new-x" autocomplete="new-password"
-              data-lpignore="true" data-1p-ignore="true"
+            <input id="cpw-new" type="password" name="cpw-new-x" autocomplete="new-password" data-lpignore="true"
+              data-1p-ignore="true"
               class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
               placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)">
           </div>
@@ -1518,17 +1546,32 @@
     }
 
 
+    // สต็อกแยกเป็นก้อนตาม "ชื่อวัสดุ + ฝ่าย" เพื่อไม่ให้ของที่รับเข้าคนละฝ่ายถูกรวมยอดกัน
+    function stockKey(name, department) {
+      return name + '||' + (department || '');
+    }
+
     function getStockMap() {
       const map = {};
       allRecords.forEach(r => {
-        const k = r.item_name;
-        if (!map[k]) map[k] = { qty: 0, unit: r.unit || '', department: r.department || '' };
+        const dept = r.department || '';
+        const k = stockKey(r.item_name, dept);
+        if (!map[k]) map[k] = { name: r.item_name, department: dept, qty: 0, unit: r.unit || '' };
         if (r.type === 'in') map[k].qty += Number(r.quantity);
         else map[k].qty -= Number(r.quantity);
-        // อัปเดต department จาก record ล่าสุดที่มีค่า
-        if (r.department) map[k].department = r.department;
       });
       return map;
+    }
+
+    // ยอดคงเหลือรวมทุกฝ่ายของวัสดุแต่ละชื่อ (ใช้กับ Dashboard ที่สรุปภาพรวม ไม่แยกฝ่าย)
+    function getStockTotalsByName() {
+      const map = getStockMap();
+      const totals = {};
+      Object.values(map).forEach(info => {
+        if (!totals[info.name]) totals[info.name] = { qty: 0, unit: info.unit };
+        totals[info.name].qty += info.qty;
+      });
+      return totals;
     }
 
     function updateStats() {
@@ -1546,15 +1589,16 @@
       const map = getStockMap();
       const search = (document.getElementById('search-stock').value || '').toLowerCase();
       const list = document.getElementById('stock-list');
-      const entries = Object.entries(map)
-        .filter(([n]) => n.toLowerCase().includes(search))
-        .sort((a, b) => a[0].localeCompare(b[0], 'th'));
+      const entries = Object.values(map)
+        .filter(info => info.name.toLowerCase().includes(search))
+        .sort((a, b) => a.name.localeCompare(b.name, 'th') || a.department.localeCompare(b.department, 'th'));
 
       const empty = document.getElementById('stock-empty');
       if (!entries.length) { list.innerHTML = ''; empty.classList.remove('hidden'); return; }
       empty.classList.add('hidden');
 
-      list.innerHTML = entries.map(([name, info]) => {
+      list.innerHTML = entries.map((info) => {
+        const name = info.name;
         const c = info.qty <= 0 ? 'text-rose-500' : info.qty <= 5 ? 'text-amber-500' : 'text-emerald-600';
         const isAdmin = currentUser && currentUser.role === 'admin';
         const deptBadge = isAdmin && info.department
@@ -1570,17 +1614,17 @@
       </div>
       <div class="flex items-center gap-1.5">
         <div class="text-right mr-1"><span class="font-heading text-lg font-bold ${c}">${info.qty}</span> <span class="text-xs text-slate-400">${esc(info.unit)}</span></div>
-        <button onclick="openUpdateStock('${esc(name)}', ${info.qty}, '${esc(info.unit)}')"
+        <button onclick="openUpdateStock('${esc(name)}', ${info.qty}, '${esc(info.unit)}', '${esc(info.department || '')}')"
           class="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-500 hover:text-blue-700 transition-colors flex-shrink-0"
           title="อัปเดตสต็อก">
           <i data-lucide="arrow-up-down" class="w-4 h-4"></i>
         </button>
-        <button onclick="openItemLedger('${esc(name)}', '${esc(info.unit)}')"
+        <button onclick="openItemLedger('${esc(name)}', '${esc(info.unit)}', '${esc(info.department || '')}')"
           class="p-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-500 hover:text-violet-700 transition-colors flex-shrink-0"
           title="ดูรายละเอียดบัญชีวัสดุ">
           <i data-lucide="file-text" class="w-4 h-4"></i>
         </button>
-        <button onclick="openRenameItem('${esc(name)}', '${esc(info.unit)}')"
+        <button onclick="openRenameItem('${esc(name)}', '${esc(info.unit)}', '${esc(info.department || '')}')"
           class="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-500 hover:text-amber-700 transition-colors flex-shrink-0"
           title="แก้ชื่อวัสดุ">
           <i data-lucide="pencil" class="w-4 h-4"></i>
@@ -1594,45 +1638,67 @@
     // ========================
     // Item Ledger (บัญชีวัสดุรายชนิด)
     // ========================
-    function openItemLedger(name, unit) {
-      const rows = allRecords
-        .filter(r => r.item_name === name)
+    let currentItemLedgerData = null;
+
+    // สร้างรายการประวัติแบบมีโครงสร้าง (ใช้ร่วมกันทั้งตารางบนหน้าจอ และแบบฟอร์ม PDF)
+    function buildItemLedgerRows(name, department) {
+      const hasDept = department !== undefined;
+      const rawRows = allRecords
+        .filter(r => r.item_name === name && (!hasDept || (r.department || '') === (department || '')))
         .sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
 
       let balance = 0;
+      const rows = rawRows.map(r => {
+        const qty = Number(r.quantity) || 0;
+        const isIn = r.type === 'in';
+        balance += isIn ? qty : -qty;
+
+        const d = r.created_at ? new Date(r.created_at) : null;
+        const dateStr = d ? d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-';
+
+        let receivedFrom = '-';
+        let issuedTo = '-';
+        let remark = '';
+        const docNo = r.slip_id || '-';
+
+        if (isIn) {
+          receivedFrom = r.source || '-';
+          remark = r.note || '';
+        } else {
+          const requester = getRequesterName(r);
+          issuedTo = requester || (r.note && !isIn ? '' : '') || '-';
+          if (!requester) issuedTo = '-';
+        }
+
+        return {
+          isIn, dateStr, receivedFrom, issuedTo, docNo, remark,
+          qtyIn: isIn ? qty : null,
+          qtyOut: !isIn ? qty : null,
+          balance
+        };
+      });
+
+      return { rows, balance: balance };
+    }
+
+    function openItemLedger(name, unit, department) {
+      const { rows, balance } = buildItemLedgerRows(name, department);
+
       let bodyHtml = '';
       if (!rows.length) {
         bodyHtml = `<tr><td colspan="8" class="text-center text-slate-400 py-8">ไม่มีประวัติของวัสดุนี้</td></tr>`;
       } else {
         bodyHtml = rows.map((r, i) => {
-          const qty = Number(r.quantity) || 0;
-          const isIn = r.type === 'in';
-          balance += isIn ? qty : -qty;
-
-          const d = r.created_at ? new Date(r.created_at) : null;
-          const dateStr = d ? d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-';
-
-          let receivedFrom = '-';
-          let issuedTo = '-';
-          const docNo = r.slip_id ? esc(r.slip_id) : '-';
-
-          if (isIn) {
-            receivedFrom = r.source ? esc(r.source) : '-';
-          } else {
-            const requester = getRequesterName(r);
-            issuedTo = requester ? esc(requester) : (r.note ? esc(r.note) : '-');
-          }
-
           const rowBg = i % 2 === 0 ? '' : 'bg-slate-50/60';
           return `<tr class="${rowBg} border-t border-slate-100">
-            <td class="py-1.5 px-2 whitespace-nowrap text-slate-600">${isIn ? dateStr : '-'}</td>
-            <td class="py-1.5 px-2 whitespace-nowrap text-slate-600">${!isIn ? dateStr : '-'}</td>
-            <td class="py-1.5 px-2 text-slate-700">${receivedFrom}</td>
-            <td class="py-1.5 px-2 text-slate-700">${issuedTo}</td>
-            <td class="py-1.5 px-2 whitespace-nowrap text-slate-500">${docNo}</td>
-            <td class="py-1.5 px-2 text-right ${isIn ? 'text-emerald-600 font-medium' : 'text-slate-300'}">${isIn ? qty : ''}</td>
-            <td class="py-1.5 px-2 text-right ${!isIn ? 'text-rose-500 font-medium' : 'text-slate-300'}">${!isIn ? qty : ''}</td>
-            <td class="py-1.5 px-2 text-right font-semibold text-slate-700">${balance}</td>
+            <td class="py-1.5 px-2 whitespace-nowrap text-slate-600">${r.isIn ? r.dateStr : '-'}</td>
+            <td class="py-1.5 px-2 whitespace-nowrap text-slate-600">${!r.isIn ? r.dateStr : '-'}</td>
+            <td class="py-1.5 px-2 text-slate-700">${esc(r.receivedFrom)}</td>
+            <td class="py-1.5 px-2 text-slate-700">${esc(r.issuedTo)}</td>
+            <td class="py-1.5 px-2 whitespace-nowrap text-slate-500">${esc(r.docNo)}</td>
+            <td class="py-1.5 px-2 text-right ${r.isIn ? 'text-emerald-600 font-medium' : 'text-slate-300'}">${r.isIn ? r.qtyIn : ''}</td>
+            <td class="py-1.5 px-2 text-right ${!r.isIn ? 'text-rose-500 font-medium' : 'text-slate-300'}">${!r.isIn ? r.qtyOut : ''}</td>
+            <td class="py-1.5 px-2 text-right font-semibold text-slate-700">${r.balance}</td>
           </tr>`;
         }).join('');
       }
@@ -1643,6 +1709,8 @@
       document.getElementById('item-ledger-body').innerHTML = bodyHtml;
       document.getElementById('item-ledger-overlay').classList.remove('hidden');
       lucide.createIcons();
+
+      currentItemLedgerData = { name, unit: unit || '', department: department || '', rows, balance };
     }
 
     function closeItemLedger() {
@@ -1809,13 +1877,21 @@
     let wdSelectedUnit = '';
     let wdSelectedQty = 0;
 
+    // ฝ่ายที่กำลังจะเบิกให้ (กำหนดว่าจะดึงจากสต็อกก้อนของฝ่ายไหน)
+    function getSelectedWdDept() {
+      const el = document.getElementById('wd-dept-requester');
+      return el ? el.value.trim() : '';
+    }
+
     function populateWithdrawSelect() {
       const map = getStockMap();
+      const dept = getSelectedWdDept();
       const cartQty = {};
       cart.forEach(c => { cartQty[c.item_name] = (cartQty[c.item_name] || 0) + c.quantity; });
 
-      wdItems = Object.entries(map)
-        .map(([name, info]) => ({ name, qty: info.qty - (cartQty[name] || 0), unit: info.unit }))
+      wdItems = Object.values(map)
+        .filter(info => (info.department || '') === (dept || ''))
+        .map(info => ({ name: info.name, qty: info.qty - (cartQty[info.name] || 0), unit: info.unit }))
         .filter(o => o.qty > 0)
         .sort((a, b) => a.name.localeCompare(b.name, 'th'));
 
@@ -1829,6 +1905,18 @@
           clearWdSelection();
         }
       }
+    }
+
+    // เมื่อเปลี่ยนฝ่ายที่จะเบิก ต้องรีเซ็ตของที่เลือกไว้ เพราะสต็อกที่เบิกได้เปลี่ยนไปตามฝ่าย
+    function onWdDeptChange() {
+      clearWdSelection();
+      document.getElementById('wd-name-input').value = '';
+      if (cart.length) {
+        cart = [];
+        renderCart();
+        showToast('เปลี่ยนฝ่ายแล้ว รายการในตะกร้าถูกล้าง เพราะสต็อกคนละก้อนกัน', 'bg-amber-500');
+      }
+      populateWithdrawSelect();
     }
 
     function openWdDropdown() {
@@ -1997,7 +2085,8 @@
       btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
 
       // เก็บ meta เป็น JSON ใน note field
-      const r = await api('createBatch', { rows: cart, note: JSON.stringify(meta), slip_id: slipNumber, department: currentUser ? (currentUser.department || '') : '' });
+      // department ตรงนี้ = ฝ่ายที่ระบุในฟอร์ม ซึ่งเป็นตัวกำหนดว่าจะตัดสต็อกจากก้อนของฝ่ายไหน
+      const r = await api('createBatch', { rows: cart, note: JSON.stringify(meta), slip_id: slipNumber, department: meta.requesterDept || '' });
 
       btn.disabled = false;
       btn.innerHTML = '<i data-lucide="file-check" class="inline w-4 h-4 mr-1 align-text-bottom"></i>ยืนยันใบเบิก';
@@ -2420,6 +2509,313 @@ thead th {
     }
 
     // ========================
+    // Item Ledger PDF (บัญชีวัสดุสำนักงาน - ตามแบบฟอร์มราชการ)
+    // ========================
+    const ITEM_LEDGER_ROWS_PER_PAGE = 10;
+
+    function buildItemLedgerFormHtml(name, unit, department, category, rowsChunk, pageNo, totalPages, openingBalance) {
+      const num = n => String(n);
+
+      let tableRows = '';
+      for (let i = 0; i < ITEM_LEDGER_ROWS_PER_PAGE; i++) {
+        const r = rowsChunk[i];
+        // const who = r ? (r.isIn ? r.receivedFrom : r.issuedTo) : '';
+        const who = r ? (r.isIn ? r.receivedFrom : (r.issuedTo ? `จ่ายให้ ${r.issuedTo}` : '')) : '';
+
+        // ถ้าเป็นรายการจ่าย ให้นำยอดคงเหลือก่อนหน้ารายการนี้ (คงเหลือ + จ่าย) มาใส่ช่องรับ เพื่อให้เห็นยอดต่อเนื่อง
+        let qtyInCell = r && r.qtyIn !== null ? num(r.qtyIn) : '&nbsp;';
+        if (r && !r.isIn && r.qtyOut !== null) {
+          qtyInCell = num(r.balance + r.qtyOut);
+        }
+
+        tableRows += `<tr>
+      <td style="width:10%">${r ? esc(r.dateStr) : '&nbsp;'}</td>
+      <td style="width:51%;text-align:left;padding-left:6px">${r ? esc(who !== '-' ? who : '') : '&nbsp;'}</td>
+      <td style="width:10%">${r ? esc(r.docNo !== '-' ? r.docNo : '') : '&nbsp;'}</td>
+      <td style="width:7%">${qtyInCell}</td>
+      <td style="width:7%">${r && r.qtyOut !== null ? num(r.qtyOut) : '&nbsp;'}</td>
+      <td style="width:7%;font-weight:bold">${r ? num(r.balance) : '&nbsp;'}</td>
+      <td style="width:8%">${r && r.remark ? esc(r.remark) : '&nbsp;'}</td>
+    </tr>`;
+      }
+
+      const pageTag = totalPages > 1 ? `<div class="ledger-page-tag">หน้า ${num(pageNo)}/${num(totalPages)}</div>` : '';
+
+      return `<div class="ledger-form">
+    <div class="ledger-title-row">
+      <div class="ledger-title">บัญชีวัสดุสำนักงาน</div>
+      <div class="ledger-org">
+        <div>ฝ่าย${esc(department || 'บริหารงานทั่วไป')}&nbsp;สำนักคลัง</div>
+        <div>เทศบาลนครขอนแก่น</div>
+        <div>อำเภอเมือง จังหวัดขอนแก่น</div>
+      </div>
+    </div>
+    ${pageTag}
+    <div class="ledger-meta-row">
+      <div class="ledger-meta-left">หน่วยงาน&nbsp;&nbsp;สำนักคลัง</div>
+      <div class="ledger-meta-right">ชื่อหรือชนิดวัสดุ&nbsp;&nbsp;${esc(name)}</div>
+    </div>
+    <div class="ledger-meta-row">
+      <div class="ledger-meta-left">ประเภท&nbsp;&nbsp;${esc(category || 'วัสดุสำนักงาน')}</div>
+      <div class="ledger-meta-right">หน่วยนับ&nbsp;&nbsp;${esc(unit || '')}</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2" style="width:10%">วัน เดือน ปี</th>
+          <th rowspan="2" style="width:51%">รับจาก/จ่ายให้</th>
+          <th rowspan="2" style="width:10%">เลขที่เอกสาร</th>
+          <th colspan="3" style="width:21%">จำนวน</th>
+          <th rowspan="2" style="width:8%">หมายเหตุ</th>
+        </tr>
+        <tr>
+          <th style="width:7%">รับ</th>
+          <th style="width:7%">จ่าย</th>
+          <th style="width:7%">คงเหลือ</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+
+    <div class="ledger-sig-wrap">
+      <div>ผู้บันทึก............................................................................</div>
+      <div style="margin-top:26px">(...................................................................)</div>
+    </div>
+  </div>`;
+    }
+
+    function chunkLedgerRows(rows) {
+      const pages = [];
+      if (!rows.length) { pages.push([]); return pages; }
+      for (let i = 0; i < rows.length; i += ITEM_LEDGER_ROWS_PER_PAGE) {
+        pages.push(rows.slice(i, i + ITEM_LEDGER_ROWS_PER_PAGE));
+      }
+      return pages;
+    }
+
+    // สร้าง iframe ซ่อนไว้ วาดฟอร์ม 1 หน้า แล้วแปลงเป็น canvas (ใช้ร่วมกันทั้งพิมพ์รายชิ้นและพิมพ์รวมทุกชิ้น)
+    async function renderLedgerFormToCanvas(formHtml) {
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1123px;height:794px;border:none;visibility:hidden;';
+      document.body.appendChild(iframe);
+
+      iframe.contentDocument.write(`<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+html { -webkit-locale: "en"; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { width: 1123px; height: 794px; overflow: hidden;
+  font-family: "Roboto", "Sarabun", sans-serif;
+  font-size: 11pt; line-height: 1.3; color: #000; background: #fff;
+  padding: 34px 56px 34px 56px; position: relative; }
+.ledger-title-row {
+  position: relative;
+  width: 100%;
+  min-height: 70px;
+}
+
+/* ชื่อบัญชีอยู่ตรงกลาง */
+.ledger-title {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  
+  font-size: 15pt;
+  font-weight: bold;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* ข้อมูลหน่วยงานอยู่ด้านขวา */
+.ledger-org {
+  position: absolute;
+  top: 30px; /* ดันลงมา 2 บรรทัด */
+  right: 0;
+  
+  text-align: right;
+  font-size: 11pt;
+  line-height: 1.5;
+}
+
+/* ข้อมูลด้านล่าง */
+.ledger-meta-row {
+  display: table;
+  width: 100%;
+  margin-top: 6px;
+  font-size: 11pt;
+}
+
+.ledger-meta-left {
+  display: table-cell;
+  width: 42%;
+}
+
+.ledger-meta-right {
+  display: table-cell;
+  width: 58%;
+}
+
+/* Page */
+.ledger-page-tag {
+  position: absolute;
+  top: 34px;
+  right: 56px;
+  font-size: 9pt;
+  color: #444;
+}
+
+
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  margin-top: 15px;
+  border-left: 1px solid #000;
+  border-top: 1px solid #000;
+}
+  td, th {
+  border-right: 1px solid #000;
+  border-bottom: 1px solid #000;
+  font-size: 10pt;
+  height: auto;
+  line-height: 1.4;
+  padding-bottom: 15px;
+  text-align: center;
+  vertical-align: middle;
+}
+thead th {
+  font-size: 12pt;
+  font-weight: bold;
+  height: 15px;
+  line-height: 15px;
+  padding-bottom: 20px;
+  text-align: center;
+  vertical-align: middle;
+}
+  
+.ledger-sig-wrap { margin-top: 30px; text-align: right; font-size: 10.5pt; line-height: 1.6; }
+</style></head><body>${formHtml}</body></html>`);
+      iframe.contentDocument.close();
+
+      try {
+        await Promise.race([
+          iframe.contentDocument.fonts.ready,
+          new Promise(r => setTimeout(r, 2000))
+        ]);
+      } catch (e) { /* ข้ามถ้าเบราว์เซอร์ไม่รองรับ */ }
+      await new Promise(r => setTimeout(r, 200));
+
+      const canvas = await html2canvas(iframe.contentDocument.body, {
+        scale: 3, useCORS: true, backgroundColor: '#ffffff',
+        width: 1123, height: 794,
+        windowWidth: 1123, windowHeight: 794
+      });
+      document.body.removeChild(iframe);
+      return canvas;
+    }
+
+    async function printItemLedger() {
+      if (!currentItemLedgerData) return;
+      const { name, unit, department, rows } = currentItemLedgerData;
+
+      showToast('กำลังสร้าง PDF...', 'bg-blue-500');
+
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+
+      const pages = chunkLedgerRows(rows);
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+      for (let p = 0; p < pages.length; p++) {
+        const startIdx = p * ITEM_LEDGER_ROWS_PER_PAGE;
+        const openingBalance = startIdx > 0 ? rows[startIdx - 1].balance : 0;
+        const formHtml = buildItemLedgerFormHtml(name, unit, department, '', pages[p], p + 1, pages.length, openingBalance);
+
+        const canvas = await renderLedgerFormToCanvas(formHtml);
+
+        if (p > 0) pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 297, 210);
+      }
+
+      const url = URL.createObjectURL(pdf.output('blob'));
+      window.open(url, '_blank');
+    }
+
+    // แสดง/อัปเดต/ปิด หน้าต่างสถานะการสร้าง PDF บัญชีวัสดุทั้งหมด
+    function showLedgerProgress(itemLabel, current, total) {
+      const overlay = document.getElementById('ledger-progress-overlay');
+      overlay.classList.remove('hidden');
+      lucide.createIcons();
+      updateLedgerProgress(itemLabel, current, total);
+    }
+
+    function updateLedgerProgress(itemLabel, current, total) {
+      document.getElementById('ledger-progress-item').textContent = itemLabel;
+      document.getElementById('ledger-progress-count').textContent = `${current} / ${total}`;
+      const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+      document.getElementById('ledger-progress-bar').style.width = pct + '%';
+    }
+
+    function hideLedgerProgress() {
+      document.getElementById('ledger-progress-overlay').classList.add('hidden');
+    }
+
+    // พิมพ์บัญชีวัสดุของทุกรายการในสต็อก รวมเป็น PDF ไฟล์เดียว (กดครั้งเดียว ต่อกันหมด)
+    async function printAllItemLedgers() {
+      const map = getStockMap();
+      const entries = Object.values(map).sort((a, b) => a.name.localeCompare(b.name, 'th') || a.department.localeCompare(b.department, 'th'));
+
+      if (!entries.length) { showToast('ยังไม่มีวัสดุในสต็อก', 'bg-amber-500'); return; }
+
+      showLedgerProgress('กำลังเตรียมข้อมูล...', 0, entries.length);
+
+      try {
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        let firstPageDone = false;
+
+        for (let idx = 0; idx < entries.length; idx++) {
+          const info = entries[idx];
+          const name = info.name;
+          updateLedgerProgress(name, idx + 1, entries.length);
+
+          const { rows } = buildItemLedgerRows(name, info.department);
+          const pages = chunkLedgerRows(rows);
+
+          for (let p = 0; p < pages.length; p++) {
+            const startIdx = p * ITEM_LEDGER_ROWS_PER_PAGE;
+            const openingBalance = startIdx > 0 ? rows[startIdx - 1].balance : 0;
+            const formHtml = buildItemLedgerFormHtml(name, info.unit, info.department, '', pages[p], p + 1, pages.length, openingBalance);
+
+            const canvas = await renderLedgerFormToCanvas(formHtml);
+
+            if (firstPageDone) pdf.addPage();
+            firstPageDone = true;
+            pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 297, 210);
+          }
+        }
+
+        const url = URL.createObjectURL(pdf.output('blob'));
+        window.open(url, '_blank');
+        showToast('สร้าง PDF บัญชีวัสดุทั้งหมดเรียบร้อย', 'bg-emerald-600');
+      } catch (err) {
+        console.error(err);
+        showToast('สร้าง PDF ไม่สำเร็จ ลองใหม่อีกครั้ง', 'bg-rose-500');
+      } finally {
+        hideLedgerProgress();
+      }
+    }
+
+    // ========================
     // Add (รับเข้า)
     // ========================
     function updateAddUnit() {
@@ -2622,13 +3018,13 @@ thead th {
     // ========================
     // Update Stock
     // ========================
-    let updateStockTarget = { name: '', currentQty: 0, unit: '' };
+    let updateStockTarget = { name: '', currentQty: 0, unit: '', department: '' };
     let updateStockType = 'add';
 
-    function openUpdateStock(name, currentQty, unit) {
-      updateStockTarget = { name, currentQty, unit };
+    function openUpdateStock(name, currentQty, unit, department) {
+      updateStockTarget = { name, currentQty, unit, department: department || '' };
       updateStockType = 'add';
-      document.getElementById('update-stock-name').textContent = name;
+      document.getElementById('update-stock-name').textContent = name + (department ? ` (${department})` : '');
       document.getElementById('update-stock-current').textContent = currentQty + ' ' + unit;
       document.getElementById('update-stock-qty').value = '';
       document.getElementById('update-stock-source').value = '';
@@ -2663,7 +3059,7 @@ thead th {
       const qty = parseInt(document.getElementById('update-stock-qty').value);
       if (isNaN(qty) || qty < 0) { showToast('กรุณาระบุจำนวนที่ถูกต้อง', 'bg-amber-500'); return; }
 
-      const { name, currentQty, unit } = updateStockTarget;
+      const { name, currentQty, unit, department } = updateStockTarget;
       let addQty;
 
       if (updateStockType === 'add') {
@@ -2688,9 +3084,9 @@ thead th {
           unit: unit,
           // "รับมาจากไหน" มีความหมายเฉพาะตอนที่เป็นการรับเข้า (addQty > 0)
           source: addQty > 0 ? source : '',
-          note: note || (updateStockType === 'set' ? 'ปรับสต็อก (ตั้งค่าใหม่)' : 'ปรับสต็อก'),
+          note: note || (updateStockType === 'set' ? 'ปรับสต็อก (ตั้งค่าใหม่)' : 'รับเพิ่ม'),
           created_at: new Date().toISOString(),
-          department: currentUser ? (currentUser.department || '') : ''
+          department: department || ''
         }
       });
 
@@ -2708,11 +3104,11 @@ thead th {
     // ========================
     // Rename Item
     // ========================
-    let renameTarget = { name: '', unit: '' };
+    let renameTarget = { name: '', unit: '', department: '' };
 
-    function openRenameItem(name, unit) {
-      renameTarget = { name, unit };
-      document.getElementById('rename-old-name').textContent = name;
+    function openRenameItem(name, unit, department) {
+      renameTarget = { name, unit, department: department || '' };
+      document.getElementById('rename-old-name').textContent = name + (department ? ` (${department})` : '');
       document.getElementById('rename-new-name').value = name;
       document.getElementById('rename-unit').value = unit;
       document.getElementById('rename-overlay').classList.remove('hidden');
@@ -2734,19 +3130,19 @@ thead th {
         showToast('ไม่มีการเปลี่ยนแปลง', 'bg-slate-500'); closeRenameItem(); return;
       }
 
-      // ตรวจสอบชื่อซ้ำ (ถ้าเปลี่ยนชื่อ)
+      // ตรวจสอบชื่อซ้ำภายในฝ่ายเดียวกัน (ถ้าเปลี่ยนชื่อ)
       if (newName !== renameTarget.name) {
         const map = getStockMap();
-        if (map[newName] !== undefined) {
-          showToast('มีวัสดุชื่อนี้อยู่แล้ว', 'bg-rose-500'); return;
+        if (map[stockKey(newName, renameTarget.department)] !== undefined) {
+          showToast('มีวัสดุชื่อนี้อยู่แล้วในฝ่ายนี้', 'bg-rose-500'); return;
         }
       }
 
       const btn = document.getElementById('btn-rename-ok');
       btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
 
-      // อัปเดตทุก record ที่มีชื่อเดิม
-      const targets = allRecords.filter(r => r.item_name === renameTarget.name);
+      // อัปเดตทุก record ที่มีชื่อเดิม และเป็นของฝ่ายเดียวกันเท่านั้น
+      const targets = allRecords.filter(r => r.item_name === renameTarget.name && (r.department || '') === (renameTarget.department || ''));
       let success = true;
 
       for (const rec of targets) {
@@ -3285,7 +3681,7 @@ thead th {
       const tableEmpty = document.getElementById('dash-table-empty');
       const tableEntries = Object.entries(itemMap).sort((a, b) => b[1].out - a[1].out);
       // ดึงสต็อกจริง (รวมการปรับสต็อกขึ้น/ลดทุกรายการ)
-      const realStockMap = getStockMap();
+      const realStockMap = getStockTotalsByName();
       if (!tableEntries.length) {
         tableBody.innerHTML = '';
         tableEmpty.classList.remove('hidden');
