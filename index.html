@@ -8,14 +8,10 @@
   <link rel="shortcut icon" href="432773619_419177757460052_2818669981218666077_n.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="tailwind.min.css">
+  <!-- ฟอนต์หน้าเว็บ + ฟอนต์ที่ใช้ตอนพิมพ์ PDF (ใบเบิก/บัญชีวัสดุ) รวมเป็น request เดียว -->
   <link
-    href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&display=swap"
-    rel="stylesheet">
-  <!-- อุ่นแคชฟอนต์ที่ใช้ตอนพิมพ์ PDF (ใบเบิก/บัญชีวัสดุ) ไว้ล่วงหน้า จะได้ไม่ต้องรอโหลดตอนกดพิมพ์ครั้งแรก -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Roboto:wght@400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&family=Roboto:wght@400;700&display=swap"
     rel="stylesheet">
 
   <style>
@@ -1282,6 +1278,7 @@
 
   </div><!-- /#app -->
 
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <script>
     // ========================
     // Unit Map
@@ -2483,10 +2480,10 @@ html { -webkit-locale: "en"; }
     padding: 42px 48px 42px 60px; }
   .form-title { font-size: 13pt; font-weight: bold; text-align: center; line-height: 1.4; }
   .form-header-row { display: table; width: 100%; }
-  .form-header-left  { display: table-cell; vertical-align: top; font-size: 12pt; line-height: 1.3; }
-  .form-header-right { display: table-cell; text-align: right; vertical-align: top; font-size: 12pt; line-height: 1.3; }
-  .form-date { text-align: right; font-size: 12pt; line-height: 1.3; }
-  .form-section-sm { font-size: 12pt; line-height: 1.3; padding-bottom: 2px;}
+  .form-header-left  { display: table-cell; vertical-align: top; font-size: 11pt; line-height: 1.3; }
+  .form-header-right { display: table-cell; text-align: right; vertical-align: top; font-size: 11pt; line-height: 1.3; }
+  .form-date { text-align: right; font-size: 11pt; line-height: 1.3; }
+  .form-section-sm { font-size: 11pt; line-height: 1.3; padding-bottom: 2px;}
 table {
   border-collapse: separate;
   border-spacing: 0;
@@ -2506,7 +2503,7 @@ table {
 }
 
 thead th {
-  font-size: 12pt;
+  font-size: 11pt;
   font-weight: bold;
   border-top: 1px solid #000;
   height: 15px;
@@ -2657,8 +2654,7 @@ body { width: 1123px; height: 794px; overflow: hidden;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  
-  font-size: 15pt;
+  font-size: 13pt;
   font-weight: bold;
   white-space: nowrap;
   text-align: center;
