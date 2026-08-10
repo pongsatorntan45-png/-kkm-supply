@@ -5,13 +5,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบเบิกวัสดุสำนักงาน</title>
-  <link rel="shortcut icon" href="432773619_419177757460052_2818669981218666077_n.png">
+  <link rel="shortcut icon" href="Office_Supplies.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="tailwind.min.css">
-  <!-- ฟอนต์หน้าเว็บ + ฟอนต์ที่ใช้ตอนพิมพ์ PDF (ใบเบิก/บัญชีวัสดุ) รวมเป็น request เดียว -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link
-    href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&family=Roboto:wght@400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <!-- อุ่นแคชฟอนต์ที่ใช้ตอนพิมพ์ PDF (ใบเบิก/บัญชีวัสดุ) ไว้ล่วงหน้า จะได้ไม่ต้องรอโหลดตอนกดพิมพ์ครั้งแรก -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Roboto:wght@400;700&display=swap"
     rel="stylesheet">
 
   <style>
@@ -256,7 +260,7 @@
       <div class="max-w-4xl mx-auto flex items-center justify-between">
         <div class="flex items-center gap-3">
 
-          <img alt="Logo" class="w-14 h-14 object-contain bg-white rounded-full p-1" src="432773619_419177757460052_2818669981218666077_n.png">
+          <img alt="Logo" class="w-14 h-14 object-contain bg-white rounded-full p-1" src="Office_Supplies.png">
           <div>
             <h1 class="font-heading text-xl sm:text-2xl font-bold">ระบบเบิกวัสดุสำนักงาน สำนักคลัง</h1>
             <div id="dept-filter-banner" class="text-white">
@@ -1278,7 +1282,6 @@
 
   </div><!-- /#app -->
 
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <script>
     // ========================
     // Unit Map
@@ -2179,7 +2182,7 @@
     <br>
 
     <div class="form-section-sm" style="word-break: keep-all; overflow-wrap: break-word;">
-      ข้าพเจ้า&nbsp;${reqPrefix ? esc(reqPrefix) : ''}${esc(req)}&nbsp;ตำแหน่ง&nbsp;${esc(reqPos)}&nbsp;
+      ข้าพเจ้า&nbsp;${esc(req)}&nbsp;ตำแหน่ง&nbsp;${esc(reqPos)}&nbsp;
       <span style="white-space:nowrap" >ฝ่าย&nbsp;${esc(reqDept)}</span>
     </div>
 
