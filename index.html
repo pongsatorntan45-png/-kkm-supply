@@ -8,15 +8,15 @@
   <link rel="shortcut icon" href="Office_Supplies.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&display=swap"
-    rel="stylesheet">
-  <!-- อุ่นแคชฟอนต์ที่ใช้ตอนพิมพ์ PDF (ใบเบิก/บัญชีวัสดุ) ไว้ล่วงหน้า จะได้ไม่ต้องรอโหลดตอนกดพิมพ์ครั้งแรก -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Roboto:wght@400;700&display=swap"
-    rel="stylesheet">
+  <!-- ฟอนต์ทั้งหมดที่ใช้ในหน้าเว็บ + ตอนพิมพ์ PDF รวมเป็น request เดียว โหลดแบบไม่บล็อกการ render
+       (preload ก่อน แล้วค่อยเปลี่ยนเป็น stylesheet ตอนโหลดเสร็จ, มี noscript fallback ให้เบราว์เซอร์ที่ปิด JS) -->
+  <link rel="preload" as="style"
+    href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&family=Roboto:wght@400;700&display=swap"
+    onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Kanit:wght@400;500;600;700&family=Roboto:wght@400;700&display=swap">
+  </noscript>
 
   <style>
     * {
@@ -1281,6 +1281,11 @@
     </div>
 
   </div><!-- /#app -->
+
+  <!-- ย้าย Tailwind CDN + Lucide มาไว้ท้าย body แทนที่จะอยู่ใน <head> เพื่อไม่ให้บล็อกการ render หน้าแรก
+       (เบราว์เซอร์จะ parse/แสดง HTML ทั้งหมดก่อน แล้วค่อยโหลดสองตัวนี้ขนานกันก่อนรัน script หลักด้านล่าง) -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
 
   <script>
     // ========================
