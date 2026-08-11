@@ -1418,6 +1418,15 @@
       } catch (e) { return ''; }
     }
 
+    // ดึงฝ่ายของผู้เบิกจากรายการ "เบิกออก" (ถอด JSON ในช่อง note)
+    function getRequesterDept(r) {
+      if (!r || r.type !== 'out' || !r.note) return '';
+      try {
+        const m = JSON.parse(r.note);
+        return (m && m.requesterDept) ? m.requesterDept : '';
+      } catch (e) { return ''; }
+    }
+
     // รายชื่อผู้เบิกทั้งหมดที่มีอยู่จริงในข้อมูล
     function getRequesters() {
       const s = new Set();
@@ -1664,6 +1673,7 @@
 
         let receivedFrom = '-';
         let issuedTo = '-';
+        let issuedToDept = '';
         let remark = '';
         const docNo = r.slip_id || '-';
 
@@ -1674,10 +1684,11 @@
           const requester = getRequesterName(r);
           issuedTo = requester || (r.note && !isIn ? '' : '') || '-';
           if (!requester) issuedTo = '-';
+          issuedToDept = getRequesterDept(r);
         }
 
         return {
-          isIn, dateStr, receivedFrom, issuedTo, docNo, remark,
+          isIn, dateStr, receivedFrom, issuedTo, issuedToDept, docNo, remark,
           qtyIn: isIn ? qty : null,
           qtyOut: !isIn ? qty : null,
           balance
@@ -2546,7 +2557,7 @@ thead th {
     // ========================
     // Item Ledger PDF (บัญชีวัสดุสำนักงาน - ตามแบบฟอร์มราชการ)
     // ========================
-    const ITEM_LEDGER_ROWS_PER_PAGE = 10;
+    const ITEM_LEDGER_ROWS_PER_PAGE = 7;
 
     function buildItemLedgerFormHtml(name, unit, department, category, rowsChunk, pageNo, totalPages, openingBalance) {
       const num = n => String(n);
@@ -2554,8 +2565,14 @@ thead th {
       let tableRows = '';
       for (let i = 0; i < ITEM_LEDGER_ROWS_PER_PAGE; i++) {
         const r = rowsChunk[i];
-        // const who = r ? (r.isIn ? r.receivedFrom : r.issuedTo) : '';
-        const who = r ? (r.isIn ? r.receivedFrom : (r.issuedTo ? `จ่ายให้ ${r.issuedTo}` : '')) : '';
+        // ชื่อ "รับจาก/จ่ายให้" กับ "ฝ่าย" อยู่ใน td เดียวกัน แต่ขึ้นบรรทัดใหม่ด้วย <br>
+        // ต้อง esc() แยกทีละส่วนก่อน แล้วค่อยประกอบ <br> เอง เพราะถ้า esc() ทั้งก้อนจะโดน escape <br> กลายเป็นข้อความ
+        const whoName = r ? (r.isIn ? r.receivedFrom : r.issuedTo) : '';
+        const whoNamePrefixed = whoName && whoName !== '-' ? (r.isIn ? whoName : `จ่ายให้ ${whoName}`) : '';
+        const whoDept = r && !r.isIn && r.issuedToDept ? `ฝ่าย${r.issuedToDept}` : '';
+        const whoCell = whoNamePrefixed
+          ? esc(whoNamePrefixed) + (whoDept ? `<br>${esc(whoDept)}` : '')
+          : '&nbsp;';
 
         // ถ้าเป็นรายการจ่าย ให้นำยอดคงเหลือก่อนหน้ารายการนี้ (คงเหลือ + จ่าย) มาใส่ช่องรับ เพื่อให้เห็นยอดต่อเนื่อง
         let qtyInCell = r && r.qtyIn !== null ? num(r.qtyIn) : '&nbsp;';
@@ -2565,7 +2582,7 @@ thead th {
 
         tableRows += `<tr>
       <td style="width:10%">${r ? esc(r.dateStr) : '&nbsp;'}</td>
-      <td style="width:51%;text-align:left;padding-left:6px">${r ? esc(who !== '-' ? who : '') : '&nbsp;'}</td>
+      <td style="width:51%;text-align:left;padding-left:6px">${r ? whoCell : '&nbsp;'}</td>
       <td style="width:10%">${r ? esc(r.docNo !== '-' ? r.docNo : '') : '&nbsp;'}</td>
       <td style="width:7%">${qtyInCell}</td>
       <td style="width:7%">${r && r.qtyOut !== null ? num(r.qtyOut) : '&nbsp;'}</td>
@@ -2810,22 +2827,28 @@ thead th {
         await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
         await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
 
+        // เตรียมข้อมูลของทุกรายการล่วงหน้า เพื่อให้รู้จำนวนหน้ารวมทั้งเอกสารก่อนเริ่มพิมพ์
+        const perItem = entries.map(info => {
+          const { rows } = buildItemLedgerRows(info.name, info.department);
+          return { info, rows, pages: chunkLedgerRows(rows) };
+        });
+        const totalPagesOverall = perItem.reduce((sum, it) => sum + it.pages.length, 0);
+
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
         let firstPageDone = false;
+        let globalPageNo = 0;
 
-        for (let idx = 0; idx < entries.length; idx++) {
-          const info = entries[idx];
+        for (let idx = 0; idx < perItem.length; idx++) {
+          const { info, rows, pages } = perItem[idx];
           const name = info.name;
-          updateLedgerProgress(name, idx + 1, entries.length);
-
-          const { rows } = buildItemLedgerRows(name, info.department);
-          const pages = chunkLedgerRows(rows);
+          updateLedgerProgress(name, idx + 1, perItem.length);
 
           for (let p = 0; p < pages.length; p++) {
+            globalPageNo++;
             const startIdx = p * ITEM_LEDGER_ROWS_PER_PAGE;
             const openingBalance = startIdx > 0 ? rows[startIdx - 1].balance : 0;
-            const formHtml = buildItemLedgerFormHtml(name, info.unit, info.department, '', pages[p], p + 1, pages.length, openingBalance);
+            const formHtml = buildItemLedgerFormHtml(name, info.unit, info.department, '', pages[p], globalPageNo, totalPagesOverall, openingBalance);
 
             const canvas = await renderLedgerFormToCanvas(formHtml);
 
